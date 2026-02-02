@@ -1,1 +1,2 @@
-# type404-frontend
+# 404-frontend
+Frontend repo
