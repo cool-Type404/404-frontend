@@ -15,6 +15,9 @@ dist-ssr
 .env
 .env.*
 
+# Vite
+.vite/
+
 # Test coverage
 coverage
 
