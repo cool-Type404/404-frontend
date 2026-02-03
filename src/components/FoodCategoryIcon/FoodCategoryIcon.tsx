@@ -1,7 +1,6 @@
-// src/components/FoodCategoryIcon/FoodCategoryIcon.tsx
 import React from "react";
-import { FOOD_CATEGORIES, type FoodCategoryKey } from "../..//constants/food_categories";
-import { Icon } from "../..//components/Icon";
+import { FOOD_CATEGORIES, type FoodCategoryKey } from "@/constants/food_categories";
+import { Icon } from "@/components/Icon";
 
 export type FoodCategoryIconProps = {
   category: FoodCategoryKey;
