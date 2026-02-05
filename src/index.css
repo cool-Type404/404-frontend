@@ -11,6 +11,8 @@
   --color-muted: #6FBF3A; /*figma 2번색*/ 
   --color-danger: #FF0000;
 
+  /*divider color 지정*/
+  --color-border: #555555;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
