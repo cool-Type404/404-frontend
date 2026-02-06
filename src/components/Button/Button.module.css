@@ -1,3 +1,89 @@
-/*
-tokens.css만 참조해서 스타일링
-*/
+.button {
+  appearance: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 16px;
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  min-width: 64px;
+  min-height: 32px;
+  overflow: hidden;
+
+  transition:
+    background-color 250ms ease,
+    border-color 120ms ease,
+    transform 60ms ease,
+    opacity 120ms ease;
+}
+
+.button:focus {
+  outline: none;
+}
+
+.button:focus-visible {
+  outline: none;
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.disabled,
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* 공통 Drop Shadow: x:2 y:2 blur:4 spread:2 */
+.shadow {
+  box-shadow: 2px 2px 4px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Primary: 초록 배경 + 흰 글씨 */
+.primary {
+  background: #6fbf3a;
+  color: #ffffff;
+}
+
+.primary:hover:not(:disabled) {
+  background: rgba(111, 191, 58, 0.8);
+  border-color: rgba(111, 191, 58, 0.55);
+}
+
+/* Secondary: 흰 배경 + 초록 글씨 */
+.secondary {
+  background: #ffffff;
+  color: #6fbf3a;
+  border-color: rgba(17, 24, 39, 0.18);
+}
+
+.secondary:hover:not(:disabled) {
+  background: rgba(111, 191, 58, 0.08);
+  border-color: rgba(111, 191, 58, 0.55);
+}
+
+/* Third: 흰 배경 + 검정 글씨 */
+.third {
+  background: #ffffff;
+  color: #111827;
+  border-color: rgba(17, 24, 39, 0.18);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 0 15px;
+  min-width: 16px;
+  min-height: 32px;
+}
+
+.third:hover:not(:disabled) {
+  background: rgba(17, 24, 39, 0.06);
+  border-color: rgba(17, 24, 39, 0.28);
+}
