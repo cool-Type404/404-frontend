@@ -13,6 +13,7 @@ import { FaChevronLeft } from "react-icons/fa6";
 import { FaChevronRight } from "react-icons/fa6";
 import { MdOutlineAlternateEmail } from "react-icons/md";
 import { SlLock } from "react-icons/sl";
+import { FaRegEye } from "react-icons/fa6";
 import { FaRegEyeSlash } from "react-icons/fa6";
 import { LuScanFace } from "react-icons/lu";
 import { FaBookmark } from "react-icons/fa6";
@@ -48,6 +49,7 @@ export const commonIcons = {
   rightdir: FaChevronRight,
   emailsign: MdOutlineAlternateEmail,
   passwordsign: SlLock,
+  passwordopen: FaRegEye,
   passwordhide: FaRegEyeSlash,
   nickname: LuScanFace,
   bookmarkfiiled: FaBookmark,
