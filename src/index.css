@@ -8,9 +8,15 @@
   background-color: #ffffff;
 
   --color-primary: #000;
-  --color-muted: #6FBF3A; /*figma 2번색*/ 
-  --color-danger: #FF0000;
-
+  --color-primary-50: rgba(0, 0, 0, 0.5);
+  --color-muted: #6fbf3a; /*figma 1-100, 2번색*/
+  --color-figma3: #9acd32;
+  --color-figma4: #ffffff;
+  --color-figma5: #4f7f1e;
+  --color-figma6: #eaf6a3;
+  --color-danger: #ff0000;
+  --color-figma-reviewcomponent: rgba(235, 255, 223, 0.5);
+  
   /*divider color 지정*/
   --color-border: #555555;
 
