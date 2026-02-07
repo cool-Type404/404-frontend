@@ -1,0 +1,126 @@
+.container {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+
+.label {
+  padding: 0 5px;
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--color-primary-50, rgba(0, 0, 0, 0.5));
+  text-align: left;
+}
+
+/* input + icons 부분 */
+.field {
+  display: flex;
+  align-items: center;
+
+  border: 1px solid var(--color-border, #555);
+  border-radius: 12px;
+  background: var(--color-figma4, #ffffff);
+}
+
+.field:focus-within {
+  border-color: var(--color-figma5, #4f7f1e);
+  box-shadow: 0 0 0 3px rgba(79, 127, 30, 0.15);
+}
+
+.container[data-invalid='true'] .field {
+  border-color: var(--color-danger, #ff0000);
+}
+
+.container[data-disabled='true'] .field {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  padding: 14px 14px;
+  font-size: 16px;
+  color: var(--color-primary, #000);
+}
+
+.input::placeholder {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+/* Edge/IE: password icon생성 방지*/
+.input::-ms-reveal,
+.input::-ms-clear {
+  display: none;
+}
+
+.leftIcon,
+.rightIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  color: var(--color-primary, #000);
+}
+
+/* rightIcon 안의 button은 전역 button 스타일 무시하도록 설정 */
+.rightIcon button {
+  all: unset;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.message {
+  font-size: 10px;
+  line-height: 1.4;
+  margin: 0;
+  text-align: left;
+}
+
+.helper {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.error {
+  color: var(--color-danger, #ff0000);
+}
+
+/* 음식 search쪽 variant */
+.search .field {
+  background: var(--color-muted, #6fbf3a);
+  border-color: var(--color-muted, #6fbf3a);
+}
+
+.search .field:hover,
+.search .field:focus-within {
+  box-shadow: none;
+}
+
+.search .field:focus-within {
+  border-color: var(--color-figma5, #4f7f1e);
+}
+
+.search .input {
+  color: var(--color-figma4, #ffffff);
+}
+
+.search .input::placeholder {
+  color: var(--color-figma4, #ffffff);
+  opacity: 0.8;
+}
+
+.search .leftIcon,
+.search .rightIcon {
+  color: var(--color-figma3, #9acd32);
+}
