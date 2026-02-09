@@ -1,11 +1,11 @@
 import React from 'react';
-import { commonIcons, type CommonIconName } from './commonIcons';
+import { iconRegistry, type IconName } from './iconRegistry';
 import styles from './CommonIcon.module.css';
 
 export type CommonIconVariant = 'inherit' | 'primary' | 'muted' | 'danger';
 
 export type CommonIconProps = {
-  name: CommonIconName;
+  name: IconName;
   size?: number;
   variant?: CommonIconVariant;
   className?: string;
@@ -23,7 +23,7 @@ export function CommonIcon({
   title,
   onClick,
 }: CommonIconProps) {
-  const IconComponent = commonIcons[name];
+  const IconComponent = iconRegistry[name];
   const combinedClassName = [styles.base, styles[variant], className].filter(Boolean).join(' ');
 
   return (
