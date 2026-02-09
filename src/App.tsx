@@ -1,16 +1,8 @@
 import './App.css';
-import KakaoMap from './components/KakaoMap';
+import MapScreen from './screens/MapScreen';
 
 function App() {
-  return (
-    <div className="app">
-      <h1 className="title">혼밥지도</h1>
-
-      <div className="mapWrap">
-        <KakaoMap />
-      </div>
-    </div>
-  );
+  return <MapScreen />;
 }
 
 export default App;
