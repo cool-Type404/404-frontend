@@ -30,6 +30,7 @@ export default function Modal({
   useEffect(() => {
     if (!open) return;
 
+    /*배경 스크롤 잠금*/
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
@@ -49,11 +50,13 @@ export default function Modal({
 
   const modalClassName = [styles.modal, className].filter(Boolean).join(' ');
 
+  /*overlay부분 클릭했을 때 실행 함수 -> 기본값은 false라 overlay클릭으로는 modal이 닫히지 않음*/
   const handleOverlayMouseDown = () => {
     if (!closeOnOverlayClick) return;
     onClose();
   };
 
+  /*modal 안에 있는 부분은 overlay 눌린 것처럼 처리 안되도록 stopPropagation사용*/
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   const ariaLabel = title && title.trim().length > 0 ? title : 'modal';
