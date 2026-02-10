@@ -11,13 +11,23 @@ body,
   max-width: none;
 }
 
-.title {
-  margin: 24px 0;
-}
-
 .app {
+  position: relative;
   width: 100%;
   height: 100%;
+}
+
+/* 메인 화면 레이어 */
+.mainMap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: var(--z-base);
+}
+
+/* 모달 열렸을 때 바탕 흑백 처리 */
+.dimmed {
+  filter: grayscale(0.1);
 }
 
 .mapWrap {
