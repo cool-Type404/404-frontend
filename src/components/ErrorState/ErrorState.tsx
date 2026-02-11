@@ -1,5 +1,5 @@
 import styles from './ErrorState.module.css';
-import surprisedImg from '../BobImages/surprised.png';
+import surprisedImg from '@/assets/BobImages/surprised.png';
 
 export type ErrorStateProps = {
   title?: string;
