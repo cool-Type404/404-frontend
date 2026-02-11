@@ -1,0 +1,5 @@
+.divider {
+  display: block;
+  background-color: var(--color-border, #555555);
+  border-radius: 5px;
+}

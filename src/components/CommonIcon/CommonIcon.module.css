@@ -1,0 +1,22 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.inherit { /*부모클래스의 색*/
+  color: inherit;
+}
+
+.primary { /*#000*/
+  color: var(--color-primary);
+}
+
+.muted { /*#6FBF3A*/
+  color: var(--color-muted);
+}
+
+.danger { /*#FF0000*/
+  color: var(--color-danger);
+}

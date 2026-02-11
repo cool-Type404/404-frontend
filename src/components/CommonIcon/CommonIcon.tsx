@@ -1,11 +1,14 @@
-import React from "react";
-import { commonIcons, type CommonIconName } from "./commonIcons";
+import React from 'react';
+import { iconRegistry, type IconName } from './iconRegistry';
+import styles from './CommonIcon.module.css';
+
+export type CommonIconVariant = 'inherit' | 'primary' | 'muted' | 'danger';
 
 export type CommonIconProps = {
-  name: CommonIconName;
+  name: IconName;
   size?: number;
+  variant?: CommonIconVariant;
   className?: string;
-  color?: string;
   style?: React.CSSProperties;
   title?: string;
   onClick?: React.MouseEventHandler<SVGElement>;
@@ -14,19 +17,19 @@ export type CommonIconProps = {
 export function CommonIcon({
   name,
   size = 20,
+  variant = 'inherit',
   className,
-  color,
   style,
   title,
   onClick,
 }: CommonIconProps) {
-  const IconComponent = commonIcons[name];
+  const IconComponent = iconRegistry[name];
+  const combinedClassName = [styles.base, styles[variant], className].filter(Boolean).join(' ');
 
   return (
     <IconComponent
       size={size}
-      className={className}
-      color={color}
+      className={combinedClassName}
       style={style}
       title={title}
       onClick={onClick}

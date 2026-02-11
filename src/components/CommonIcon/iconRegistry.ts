@@ -13,6 +13,7 @@ import { FaChevronLeft } from "react-icons/fa6";
 import { FaChevronRight } from "react-icons/fa6";
 import { MdOutlineAlternateEmail } from "react-icons/md";
 import { SlLock } from "react-icons/sl";
+import { FaRegEye } from "react-icons/fa6";
 import { FaRegEyeSlash } from "react-icons/fa6";
 import { LuScanFace } from "react-icons/lu";
 import { FaBookmark } from "react-icons/fa6";
@@ -32,7 +33,7 @@ import { FaPerson } from "react-icons/fa6";
 import { IoPeople } from "react-icons/io5";
 import { FaPeopleGroup } from "react-icons/fa6";
 
-export const commonIcons = {
+export const iconRegistry = {
   hamburger: PiHamburger,
   ban: LuBan,
   filter: TbFilterSearch,
@@ -48,6 +49,7 @@ export const commonIcons = {
   rightdir: FaChevronRight,
   emailsign: MdOutlineAlternateEmail,
   passwordsign: SlLock,
+  passwordopen: FaRegEye,
   passwordhide: FaRegEyeSlash,
   nickname: LuScanFace,
   bookmarkfiiled: FaBookmark,
@@ -71,4 +73,4 @@ export const commonIcons = {
 
 } as const;
 
-export type CommonIconName = keyof typeof commonIcons;
+export type IconName = keyof typeof iconRegistry;
