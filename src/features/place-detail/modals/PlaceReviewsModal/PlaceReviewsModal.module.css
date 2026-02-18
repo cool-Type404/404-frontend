@@ -1,0 +1,21 @@
+.reviewsModal {
+  width: min(420px, calc(100vw - 24px));
+  height: min(92vh, 820px);
+  border-radius: 18px;
+}
+
+/* 모달 본문 상단에 식당명(작게) */
+.subTitle {
+  margin: 10px 0 10px;
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--color-figma3);
+}
+
+/* 리뷰 리스트 */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
