@@ -23,8 +23,8 @@ type Props = {
   place: PlaceDetail;
   onMoreReviews: () => void;
   onWriteReview: () => void;
-  onToggleLike?: (reviewId: number) => void;
-  onDeleteReview?: (reviewId: number) => void;
+  onToggleLike?: (reviewId: string | number) => void;
+  onDeleteReview?: (reviewId: string | number) => void;
 };
 
 export default function PlaceDetailModal({

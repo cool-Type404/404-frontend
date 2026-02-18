@@ -1,42 +1,53 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import styles from './PlaceDetailDemoPage.module.css';
 
 import Button from '@/components/Button/Button';
 import PlaceDetailModalFlow from '@/features/place-detail/flow/PlaceDetailModalFlow';
-import {
-  mockPlaceDetailNoReviews,
-  mockPlaceDetailWithReviews,
-} from '@/features/place-detail/mock_data/placeDetail.mock';
 
 export default function PlaceDetailDemoPage() {
   const [open, setOpen] = useState(false);
-  const [withReviews, setWithReviews] = useState(true);
-
-  const place = useMemo(() => {
-    return withReviews
-      ? mockPlaceDetailWithReviews
-      : mockPlaceDetailNoReviews;
-  }, [withReviews]);
+  const [storeId, setStoreId] = useState<number | null>(null);
 
   return (
     <div className={styles.page}>
       <div className={styles.fakeMap} />
 
       <div className={styles.panel}>
-        <Button variant="primary" onClick={() => setOpen(true)}>
-          상세 모달 열기
+        <Button
+          variant="primary"
+          type="button"
+          onClick={() => {
+            setStoreId(1);
+            setOpen(true);
+          }}
+        >
+          1번 가게 상세 열기
         </Button>
 
-        <Button variant="secondary" onClick={() => setWithReviews((v) => !v)}>
-          리뷰 {withReviews ? '없음' : '있음'}으로 변경
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => {
+            setStoreId(2);
+            setOpen(true);
+          }}
+        >
+          2번 가게 상세 열기
+        </Button>
+
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => {
+            setStoreId(null);
+            setOpen(false);
+          }}
+        >
+          닫기
         </Button>
       </div>
 
-      <PlaceDetailModalFlow
-        open={open}
-        onClose={() => setOpen(false)}
-        place={place}
-      />
+      <PlaceDetailModalFlow open={open} onClose={() => setOpen(false)} storeId={storeId} />
     </div>
   );
 }

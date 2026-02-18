@@ -4,15 +4,16 @@ import EmptyState from '@/components/EmptyState/EmptyState';
 import ReviewCard from '@/features/place-detail/components/ReviewCard/ReviewCard';
 import { Button } from '@/components/Button';
 
+import { formatDateYMD } from '@/lib/date/formatDate';
+
 import styles from './ReviewSection.module.css';
 
 type Props = {
   reviews: Review[];
   onWriteReview: () => void;
   onMoreReviews: () => void;
-
-  onToggleLike?: (reviewId: number) => void;
-  onDeleteReview?: (reviewId: number) => void;
+  onToggleLike?: (reviewId: string | number) => void;
+  onDeleteReview?: (reviewId: string | number) => void;
 
   sectionRef?: React.RefObject<HTMLElement | null>;
 };
@@ -47,23 +48,22 @@ export default function ReviewSection({
       ) : (
         <div className={styles.reviewList}>
           {previewReviews.map((r) => {
-            const reviewIdNum = typeof r.review_id === 'number' ? r.review_id : Number(r.review_id);
-
             const firstImagePath =
               r.review_images && r.review_images.length > 0
                 ? r.review_images[0].review_img_path
                 : undefined;
 
             const tags =
-              r.hashtags?.map((t) => (t.hashtag_name.startsWith('#') ? t.hashtag_name : `#${t.hashtag_name}`)) ??
-              undefined;
+              r.hashtags?.map((t) =>
+                t.hashtag_name.startsWith('#') ? t.hashtag_name : `#${t.hashtag_name}`,
+              ) ?? undefined;
 
             return (
               <ReviewCard
-                key={r.review_id}
-                id={reviewIdNum}
+                key={String(r.review_id)}
+                id={r.review_id}
                 author={r.user_nickname ?? '익명'}
-                date={r.created_at}
+                date={formatDateYMD(r.created_at)}
                 rating={r.review_rating}
                 content={r.review_contents}
                 tags={tags}
@@ -71,14 +71,14 @@ export default function ReviewSection({
                 likesCount={r.like_count ?? 0}
                 likedByMe={Boolean(r.liked_by_me)}
                 isMine={Boolean(r.is_mine)}
-                onToggleLike={() => onToggleLike?.(reviewIdNum)}
-                onDelete={() => onDeleteReview?.(reviewIdNum)}
+                onToggleLike={onToggleLike}
+                onDelete={onDeleteReview}
               />
             );
           })}
 
           {reviews.length > 3 ? (
-            <Button variant="secondary" onClick={onMoreReviews}>
+            <Button variant="secondary" type="button" onClick={onMoreReviews}>
               더보기
             </Button>
           ) : null}

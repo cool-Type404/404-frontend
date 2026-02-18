@@ -4,6 +4,7 @@ import { CommonIcon } from '@/components/CommonIcon/CommonIcon';
 
 import ReviewCard from '@/features/place-detail/components/ReviewCard/ReviewCard';
 import type { Review } from '@/features/place-detail/mock_data/placeDetail.types';
+import { formatDateYMD } from '@/lib/date/formatDate';
 
 import styles from './PlaceReviewsModal.module.css';
 
@@ -13,8 +14,8 @@ type Props = {
   onBack: () => void;
   placeName: string;
   reviews: Review[];
-  onToggleLike?: (reviewId: number) => void;
-  onDeleteReview?: (reviewId: number) => void;
+  onToggleLike?: (reviewId: string | number) => void;
+  onDeleteReview?: (reviewId: string | number) => void;
 };
 
 export default function PlaceReviewsModal({
@@ -63,14 +64,12 @@ export default function PlaceReviewsModal({
 
           const firstImage = r.review_images?.[0]?.review_img_path;
 
-          const reviewIdNumber = Number(r.review_id);
-
           return (
             <ReviewCard
-              key={r.review_id}
+              key={String(r.review_id)}
               id={r.review_id}
               author={r.user_nickname ?? '익명'}
-              date={r.created_at}
+              date={formatDateYMD(r.created_at)}
               rating={r.review_rating}
               content={r.review_contents}
               tags={tags}
@@ -78,8 +77,8 @@ export default function PlaceReviewsModal({
               likesCount={r.like_count ?? 0}
               likedByMe={Boolean(r.liked_by_me)}
               isMine={Boolean(r.is_mine)}
-              onToggleLike={() => onToggleLike?.(reviewIdNumber)}
-              onDelete={() => onDeleteReview?.(reviewIdNumber)}
+              onToggleLike={onToggleLike}
+              onDelete={onDeleteReview}
             />
           );
         })}
