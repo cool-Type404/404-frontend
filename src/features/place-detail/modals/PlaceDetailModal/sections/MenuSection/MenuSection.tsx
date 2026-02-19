@@ -6,6 +6,8 @@ import type { StoreMenu } from '@/features/place-detail/mock_data/placeDetail.ty
 
 import styles from './MenuSection.module.css';
 
+import { toApiAssetUrl } from '@/utils/assetUrl';
+
 type Props = {
   menus: StoreMenu[];
   sectionRef?: React.RefObject<HTMLElement | null>;
@@ -24,7 +26,7 @@ export default function MenuSection({ menus, sectionRef }: Props) {
               <div className={styles.menuImageBox}>
                 {m.menu_img ? (
                   <img
-                    src={`http://localhost:8080${m.menu_img}`}
+                    src={toApiAssetUrl(m.menu_img)}
                     alt={m.menu_name}
                     className={styles.menuImage}
                   />

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { toApiAssetUrl } from '@/utils/assetUrl';
+
 import Chip from '@/components/Chip/Chip';
 import { CommonIcon } from '@/components/CommonIcon/CommonIcon';
 
@@ -119,7 +121,7 @@ export default function ReviewCard({
       {showImage ? (
         <div className={styles.imageWrap}>
           <img
-            src={`http://localhost:8080${imageUrl}`}
+            src={toApiAssetUrl(imageUrl)}
             alt="리뷰 이미지"
             className={styles.image}
             draggable={false}

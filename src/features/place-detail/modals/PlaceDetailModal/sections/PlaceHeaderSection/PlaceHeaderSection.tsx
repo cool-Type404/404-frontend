@@ -3,6 +3,8 @@ import styles from './PlaceHeaderSection.module.css';
 import type { PlaceDetail } from '@/features/place-detail/mock_data/placeDetail.types';
 import { Divider } from '@/components/Divider';
 
+import { toApiAssetUrl } from '@/utils/assetUrl';
+
 type Props = {
   place: PlaceDetail;
   ratingText: string;
@@ -10,26 +12,26 @@ type Props = {
 
 export default function PlaceHeaderSection({ place, ratingText }: Props) {
   const phoneDigits = place.store_number?.replaceAll('-', '') ?? '';
+  const storeImgSrc = toApiAssetUrl(place.store_img);
 
   return (
     <div className={styles.wrap}>
       <Divider spacing={12} color="#6fbf3a" />
 
-      <div className={styles.heroImages}>
-        {place.store_menus.slice(0, 2).map((m) => (
-          <div key={m.menu_id} className={styles.heroImageBox}>
-            {m.menu_img ? (
-              <img
-                src={`http://localhost:8080${m.menu_img}`}
-                alt={`${place.store_name} 대표 이미지`}
-                className={styles.heroImage}
-              />
-            ) : (
-              <div className={styles.heroPlaceholder}>이미지 준비중</div>
-            )}
-          </div>
-        ))}
-      </div>
+      {place.store_img ? (
+        <div className={styles.heroImageBox}>
+          <img
+            src={storeImgSrc}
+            alt={`${place.store_name} 대표 이미지`}
+            className={styles.heroImage}
+            draggable={false}
+          />
+        </div>
+      ) : (
+        <div className={styles.heroImageBox}>
+          <div className={styles.heroPlaceholder}>이미지 준비중</div>
+        </div>
+      )}
 
       <Divider spacing={12} color="#6fbf3a" />
 
