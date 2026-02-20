@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import svgr from 'vite-plugin-svgr';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), svgr()],
   resolve: {
@@ -16,6 +15,13 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            // Basic Auth 팝업의 원인인 헤더 제거
+            delete proxyRes.headers['www-authenticate'];
+            delete proxyRes.headers['WWW-Authenticate'];
+          });
+        },
       },
     },
   },
