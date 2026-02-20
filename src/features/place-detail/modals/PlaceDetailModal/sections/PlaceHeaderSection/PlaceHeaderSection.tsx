@@ -12,7 +12,6 @@ type Props = {
 
 export default function PlaceHeaderSection({ place, ratingText }: Props) {
   const phoneDigits = place.store_number?.replaceAll('-', '') ?? '';
-  const storeImgSrc = toApiAssetUrl(place.store_img);
 
   return (
     <div className={styles.wrap}>
@@ -21,7 +20,7 @@ export default function PlaceHeaderSection({ place, ratingText }: Props) {
       {place.store_img ? (
         <div className={styles.heroImageBox}>
           <img
-            src={storeImgSrc}
+            src={toApiAssetUrl(place.store_img)}
             alt={`${place.store_name} 대표 이미지`}
             className={styles.heroImage}
             draggable={false}
