@@ -1,16 +1,8 @@
-import './App.css';
-import KakaoMap from './components/KakaoMap';
+import '@/App.css';
+import PlaceDetailDemoPage from '@/features/place-detail/demoPage/PlaceDetailDemoPage';
 
 function App() {
-  return (
-    <div className="app">
-      <h1 className="title">혼밥지도</h1>
-
-      <div className="mapWrap">
-        <KakaoMap />
-      </div>
-    </div>
-  );
+  return <PlaceDetailDemoPage />;
 }
 
 export default App;
