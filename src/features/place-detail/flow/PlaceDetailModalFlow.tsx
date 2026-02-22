@@ -162,7 +162,11 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
         }),
       );
 
-      review.liked_by_me ? unlike.mutate(id) : like.mutate(id);
+      if (review.liked_by_me) {
+        unlike.mutate(id);
+      } else {
+        like.mutate(id);
+      }
     },
     [reviewsState, like, unlike],
   );
