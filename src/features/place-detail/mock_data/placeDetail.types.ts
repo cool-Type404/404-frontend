@@ -15,7 +15,7 @@ export type StoreMenu = {
 
   menu_name: string;
   price: number;
-  menu_img?: string;
+  menu_img?: string | null;
   is_rec?: boolean;
 };
 
@@ -40,7 +40,7 @@ export type HashTag = {
 export type ReviewImage = {
   review_img_id: string | number;
   review_id: string | number;
-  review_img_path: string;
+  review_img_path: string | null;
 };
 
 export type Review = {
@@ -52,10 +52,10 @@ export type Review = {
   review_rating: number;
   created_at: string;
 
-  user_nickname?: string; // author 표시용 (User Info의 user_nickname)
-  like_count?: number; // 좋아요 수
-  liked_by_me?: boolean; // 현재 로그인 유저가 좋아요 눌렀는지
-  is_mine?: boolean; // 내가 쓴 리뷰인지
+  user_nickname?: string;
+  like_count?: number;
+  liked_by_me?: boolean;
+  is_mine?: boolean;
   hashtags?: HashTag[];
   review_images?: ReviewImage[];
 };
