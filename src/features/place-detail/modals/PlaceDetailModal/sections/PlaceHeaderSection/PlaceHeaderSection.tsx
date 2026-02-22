@@ -3,8 +3,6 @@ import styles from './PlaceHeaderSection.module.css';
 import type { PlaceDetail } from '@/features/place-detail/mock_data/placeDetail.types';
 import { Divider } from '@/components/Divider';
 
-import { toApiAssetUrl } from '@/utils/assetUrl';
-
 type Props = {
   place: PlaceDetail;
   ratingText: string;
@@ -20,7 +18,7 @@ export default function PlaceHeaderSection({ place, ratingText }: Props) {
       {place.store_img ? (
         <div className={styles.heroImageBox}>
           <img
-            src={toApiAssetUrl(place.store_img)}
+            src={`/api/stores/image/${place.store_img}`}
             alt={`${place.store_name} 대표 이미지`}
             className={styles.heroImage}
             draggable={false}
