@@ -73,7 +73,7 @@ export default function PlaceReviewsModal({
               rating={r.review_rating}
               content={r.review_contents}
               tags={tags}
-              imageUrl={firstImage}
+              imageUrl={firstImage ?? undefined}
               likesCount={r.like_count ?? 0}
               likedByMe={Boolean(r.liked_by_me)}
               isMine={Boolean(r.is_mine)}
