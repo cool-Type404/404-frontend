@@ -87,10 +87,23 @@
   gap: 14px;
 
   background: #fff;
+  transition: background-color 0.15s ease;
   border-radius: 16px;
   padding: 22px 18px;
   min-height: 70px;
   box-shadow: 2px 2px 4px 2px rgba(0, 0, 0, 0.12);
+}
+
+.card:hover {
+  background-color: #f0fae8;
+}
+
+.card:active {
+  background-color: #d6f0c0;
+}
+
+.cardSelected {
+  background-color: #d6f0c0;
 }
 
 .cardLeft {
