@@ -1,8 +1,8 @@
-import '@/App.css';
-import PlaceDetailDemoPage from '@/features/place-detail/demoPage/PlaceDetailDemoPage';
+import './App.css';
+import MapScreen from './screens/MapScreen';
 
 function App() {
-  return <PlaceDetailDemoPage />;
+  return <MapScreen />;
 }
 
 export default App;

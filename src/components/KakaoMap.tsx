@@ -1,33 +1,151 @@
 import { useEffect, useRef } from 'react';
 
+type KakaoLatLng = unknown;
+
+type KakaoMapInstance = {
+  getLevel: () => number;
+  setLevel: (level: number, opts?: { animate?: boolean }) => void;
+};
+
+type KakaoMaps = {
+  load: (cb: () => void) => void;
+  LatLng: new (lat: number, lng: number) => KakaoLatLng;
+  Map: new (
+    container: HTMLElement,
+    options: { center: KakaoLatLng; level: number; zoomable?: boolean },
+  ) => KakaoMapInstance;
+  Marker: new (opts: { map: KakaoMapInstance; position: KakaoLatLng }) => unknown;
+};
+
+type KakaoWindow = { maps: KakaoMaps };
+
+function getKakao(): KakaoWindow | null {
+  const k = window.kakao as unknown as KakaoWindow | undefined;
+  if (!k || !k.maps) return null;
+  return k;
+}
+
 export default function KakaoMap() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<KakaoMapInstance | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
+    const container = containerRef.current;
 
-    // SDK 로드 여부 방어
+    // ====== 🔥 부드러운 줌 핵심 파라미터 ======
+    const LEVEL_MIN = 1;
+    const LEVEL_MAX = 14;
+
+    // 휠 입력을 얼마나 “쌓아야” 1칸 줌으로 처리할지 (값이 클수록 더 부드럽고 느림)
+    const WHEEL_THRESHOLD = 180;
+
+    // 연속 입력을 묶어서 적용하는 디바운스(ms) (클수록 더 부드럽고 느림)
+    const APPLY_DELAY = 170;
+
+    // 너무 빠르게 연속으로 바뀌는 걸 막는 최소 간격(ms)
+    const RATE_LIMIT = 220;
+
+    let wheelAcc = 0; // 휠 누적
+    let applyTimer: number | null = null;
+    let lastAppliedAt = 0;
+
+    const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+    const applyZoom = () => {
+      applyTimer = null;
+
+      const map = mapRef.current;
+      if (!map) {
+        wheelAcc = 0;
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastAppliedAt < RATE_LIMIT) {
+        // 너무 빠르면 다음 기회로 미룸
+        applyTimer = window.setTimeout(applyZoom, RATE_LIMIT - (now - lastAppliedAt));
+        return;
+      }
+
+      // 누적된 휠로 몇 단계 움직일지 계산
+      const steps = Math.trunc(wheelAcc / WHEEL_THRESHOLD);
+
+      // steps가 0이면 아직 임계치 부족 -> 그냥 종료
+      if (steps === 0) return;
+
+      // 한 번에 너무 많이 점프하면 또 눈 아프니까, 최대 1칸만 적용(가장 안정적)
+      const step = steps > 0 ? 1 : -1;
+
+      const current = map.getLevel();
+      const next = clamp(current + step, LEVEL_MIN, LEVEL_MAX);
+
+      if (next !== current) {
+        map.setLevel(next, { animate: true });
+        lastAppliedAt = Date.now();
+      }
+
+      // 적용한 만큼 누적치에서 제거(잔여분은 다음에 이어서)
+      wheelAcc -= step * WHEEL_THRESHOLD;
+
+      // 아직도 임계치가 남아있으면(사용자가 계속 스크롤한 상태) 한 번 더 천천히 처리
+      if (Math.abs(wheelAcc) >= WHEEL_THRESHOLD) {
+        applyTimer = window.setTimeout(applyZoom, APPLY_DELAY);
+      }
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+
+      // ✅ 트랙패드 환경에서 너무 민감하면 이 옵션 추천:
+      // Ctrl 키 누를 때만 줌 허용(원하면 주석 해제)
+      // if (!e.ctrlKey) return;
+
+      const map = mapRef.current;
+      if (!map) return;
+
+      // deltaY가 환경마다 너무 크거나 작아서, “부드럽게” 보정
+      // (큰 값은 살짝 줄이고 작은 값은 쌓이게)
+      const dy = e.deltaY;
+
+      // 누적 (dy > 0 : 줌아웃 방향)
+      wheelAcc += dy;
+
+      // 디바운스: 연속 입력을 묶어서 APPLY_DELAY 후 적용
+      if (applyTimer) window.clearTimeout(applyTimer);
+      applyTimer = window.setTimeout(applyZoom, APPLY_DELAY);
+    };
+
     const initMap = () => {
-      if (!window.kakao || !window.kakao.maps) return;
+      const kakao = getKakao();
+      if (!kakao) return;
 
-      window.kakao.maps.load(() => {
-        // 홍대입구역(대략)
-        const hongdae = new window.kakao.maps.LatLng(37.5563, 126.9236);
+      kakao.maps.load(() => {
+        const hongdae = new kakao.maps.LatLng(37.5563, 126.9236);
 
-        const map = new window.kakao.maps.Map(containerRef.current!, {
+        const map = new kakao.maps.Map(container, {
           center: hongdae,
           level: 3,
+          zoomable: false, // ✅ 기본 휠 줌 OFF
         });
 
-        new window.kakao.maps.Marker({ map, position: hongdae });
+        mapRef.current = map;
+        new kakao.maps.Marker({ map, position: hongdae });
+
+        container.addEventListener('wheel', onWheel, { passive: false });
       });
     };
 
-    if (window.kakao && window.kakao.maps) {
+    // SDK 이미 로드됨
+    if (getKakao()) {
       initMap();
-      return;
+      return () => {
+        if (applyTimer) window.clearTimeout(applyTimer);
+        container.removeEventListener('wheel', onWheel);
+      };
     }
 
+    // SDK 로드 대기
     const script = document.querySelector(
       'script[src^="https://dapi.kakao.com/v2/maps/sdk.js"]',
     ) as HTMLScriptElement | null;
@@ -38,9 +156,13 @@ export default function KakaoMap() {
     }
 
     script.addEventListener('load', initMap);
-    return () => script.removeEventListener('load', initMap);
+
+    return () => {
+      if (applyTimer) window.clearTimeout(applyTimer);
+      script.removeEventListener('load', initMap);
+      container.removeEventListener('wheel', onWheel);
+    };
   }, []);
 
-  // ✅ 화면 높이의 70% 차지
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 }

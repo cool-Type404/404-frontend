@@ -1,8 +1,7 @@
 :root {
+  /* figma 색상 */
   --color-primary: #000;
   --color-primary-50: rgba(0, 0, 0, 0.5);
-
-  /* figma 색상 */
   --color-muted: #6fbf3a; /* figma 1-100, 2번색 */
   --color-figma3: #9acd32;
   --color-figma4: #ffffff;
