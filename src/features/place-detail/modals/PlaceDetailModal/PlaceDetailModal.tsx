@@ -23,6 +23,7 @@ type Props = {
   place: PlaceDetail;
   onMoreReviews: () => void;
   onWriteReview: () => void;
+  onBookmarkToggle?: (isCurrentlyBookmarked: boolean) => void;
   onToggleLike?: (reviewId: string | number) => void;
   onDeleteReview?: (reviewId: string | number) => void;
 };
@@ -33,6 +34,7 @@ export default function PlaceDetailModal({
   place,
   onMoreReviews,
   onWriteReview,
+  onBookmarkToggle,
   onToggleLike,
   onDeleteReview,
 }: Props) {
@@ -51,14 +53,17 @@ export default function PlaceDetailModal({
 
   useEffect(() => {
     if (!open) return;
-
     setBookmarked(Boolean(place.bookmarked));
     setActiveTab('menu');
-
     requestAnimationFrame(() => {
       getScrollContainer()?.scrollTo({ top: 0 });
     });
   }, [open, place.bookmarked]);
+
+  const handleBookmarkClick = useCallback(() => {
+    onBookmarkToggle?.(bookmarked);
+    setBookmarked((v) => !v);
+  }, [bookmarked, onBookmarkToggle]);
 
   const ratingText =
     !place.avg_rating || place.reviews.length === 0
@@ -80,7 +85,6 @@ export default function PlaceDetailModal({
 
     const containerRect = container.getBoundingClientRect();
     const nodeRect = node.getBoundingClientRect();
-
     const offset = nodeRect.top - containerRect.top + container.scrollTop - 52;
 
     container.scrollTo({
@@ -96,7 +100,6 @@ export default function PlaceDetailModal({
     if (!container) return;
 
     const containerRect = container.getBoundingClientRect();
-
     const sections = [
       { key: 'menu' as TabKey, ref: menuRef },
       { key: 'seats' as TabKey, ref: seatsRef },
@@ -105,33 +108,23 @@ export default function PlaceDetailModal({
     ];
 
     let current: TabKey = 'menu';
-
     for (const section of sections) {
       const el = section.ref.current;
       if (!el) continue;
-
       const rect = el.getBoundingClientRect();
-
       if (rect.top - containerRect.top <= 60) {
         current = section.key;
       }
     }
-
     setActiveTab(current);
   }, []);
 
   useEffect(() => {
     const container = getScrollContainer();
     if (!container) return;
-
-    const onScroll = () => {
-      requestAnimationFrame(updateActiveTabByScroll);
-    };
-
+    const onScroll = () => requestAnimationFrame(updateActiveTabByScroll);
     container.addEventListener('scroll', onScroll);
-    return () => {
-      container.removeEventListener('scroll', onScroll);
-    };
+    return () => container.removeEventListener('scroll', onScroll);
   }, [updateActiveTabByScroll]);
 
   if (!open) return null;
@@ -142,7 +135,7 @@ export default function PlaceDetailModal({
         ariaLabel={bookmarked ? '북마크 해제' : '북마크'}
         tone="green"
         size={25}
-        onClick={() => setBookmarked((v) => !v)}
+        onClick={handleBookmarkClick}
       >
         <CommonIcon name={bookmarked ? 'bookmarkfiiled' : 'bookmarkline'} />
       </IconButton>
@@ -162,7 +155,7 @@ export default function PlaceDetailModal({
     </IconButton>
   );
 
-    const tabItems = [
+  const tabItems = [
     { key: 'menu' as const, label: '전체메뉴', iconName: 'forkknife' as const },
     { key: 'seats' as const, label: '좌석수', iconName: 'chair' as const },
     { key: 'reviews' as const, label: '식당리뷰', iconName: 'review' as const },
@@ -182,20 +175,12 @@ export default function PlaceDetailModal({
     >
       <div className={styles.body} ref={scrollRef}>
         <PlaceHeaderSection place={place} ratingText={ratingText} />
-
         <StickyTabs<TabKey> activeTab={activeTab} onTabClick={scrollTo} items={tabItems} />
-
         <Divider spacing={12} color="#6fbf3a" />
-
-        {/* Sections */}
         <MenuSection menus={place.store_menus} sectionRef={menuRef} />
-
         <Divider spacing={12} color="#6fbf3a" />
-
         <SeatSection storeSeat={place.store_seat} sectionRef={seatsRef} />
-
         <Divider spacing={12} color="#6fbf3a" />
-
         <ReviewSection
           reviews={place.reviews}
           onWriteReview={onWriteReview}
@@ -204,11 +189,8 @@ export default function PlaceDetailModal({
           onDeleteReview={onDeleteReview}
           sectionRef={reviewsRef}
         />
-
         <Divider spacing={12} color="#6fbf3a" />
-
         <HoursSection opening_hours={place.opening_hours} sectionRef={hoursRef} />
-
         <div className={styles.bottomSpace} />
       </div>
     </Modal>
