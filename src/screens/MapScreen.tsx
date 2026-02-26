@@ -80,16 +80,16 @@ export default function MapScreen() {
           {isLoading ? (
             <div>로딩 중...</div>
           ) : (
-            stores.map((s) => (
+            stores.map((s, index) => (
               <div
-                key={s.storeId}
-                className={`${styles.card} ${selectedStoreId === s.storeId ? styles.cardSelected : ''}`}
-                onClick={() => setSelectedStoreId(s.storeId)}
+                key={s.storeInfoPK ?? index}
+                className={`${styles.card} ${selectedStoreId === s.storeInfoPK ? styles.cardSelected : ''}`}
+                onClick={() => setSelectedStoreId(s.storeInfoPK)}
                 style={{ cursor: 'pointer' }}
               >
                 <div className={styles.cardLeft}>
                   <div className={styles.catIconBox}>
-                    <FoodCategoryIcon category={toFoodCategory(s.storeType)} size={26} />
+                    <FoodCategoryIcon category={toFoodCategory(s.storeCategory)} size={26} />
                   </div>
                   <div className={styles.storeInfo}>
                     <div className={styles.storeNameRow}>
@@ -98,21 +98,23 @@ export default function MapScreen() {
                     </div>
                     <div className={styles.storeMeta}>
                       <span className={styles.metaText}>
-                        {categoryLabel(toFoodCategory(s.storeType))}
+                        {categoryLabel(toFoodCategory(s.storeCategory))}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className={styles.cardRight}>
-                  <Chip variant={s.currentOpen ? 'open' : 'closed'} size="sm">
-                    {s.currentOpen ? '영업중' : '영업전'}
+                  <Chip variant={s.isOpen ? 'open' : 'closed'} size="sm">
+                    {s.isOpen ? '영업중' : '영업전'}
                   </Chip>
                   <div className={styles.rating}>
                     <span className={styles.ratingLabel}>평점</span>
                     <span className={styles.star}>
                       <CommonIcon name="starfilled" size={14} />
                     </span>
-                    <span className={styles.ratingValue}>{s.avgRating.toFixed(1)}</span>
+                    <span className={styles.ratingValue}>
+                      {s.storeRating != null ? s.storeRating.toFixed(1) : '-'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -142,24 +144,15 @@ export default function MapScreen() {
 
 function categoryLabel(category: FoodCategory) {
   switch (category) {
-    case 'korean':
-      return '한식';
-    case 'japanese':
-      return '일식';
-    case 'western':
-      return '양식';
-    case 'chinese':
-      return '중식';
-    case 'asian':
-      return '아시안';
-    case 'cafe':
-      return '카페';
-    case 'bunsik':
-      return '분식';
-    case 'etc':
-      return '기타';
-    default:
-      return '';
+    case 'korean': return '한식';
+    case 'japanese': return '일식';
+    case 'western': return '양식';
+    case 'chinese': return '중식';
+    case 'asian': return '아시안';
+    case 'cafe': return '카페';
+    case 'bunsik': return '분식';
+    case 'etc': return '기타';
+    default: return '';
   }
 }
 

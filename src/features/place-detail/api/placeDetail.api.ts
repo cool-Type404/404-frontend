@@ -3,19 +3,20 @@ import { parseApiError } from '@/lib/api/errors';
 
 // ERD기반 types
 export interface StoreDetail {
-  storeId: number;
+  storeInfoPK: number;
   storeName: string;
-  storeType: string;
+  storeCategory: string;
   storeAddress: string;
   storeNumber: string;
-  currentOpen: boolean;
+  isOpen: boolean;
   avgRating: number;
   eatingLevel: string;
+  storeImage: string | null;
   seats: {
     singleSeat: boolean;
     doubleSeat: boolean;
     tripleSeat: boolean;
-  };
+  }[];
   menus: Menu[];
   openingHours: OpeningHour[];
 }

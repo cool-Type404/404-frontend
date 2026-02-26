@@ -2,12 +2,11 @@ import { http } from '@/lib/api/http';
 import { parseApiError } from '@/lib/api/errors';
 
 export interface StoreListItem {
-  storeId: number;
+  storeInfoPK: number;
   storeName: string;
-  storeType: string;
-  currentOpen: boolean;
-  avgRating: number;
-  eatingLevel: string;
+  storeCategory: string;
+  isOpen: boolean;
+  storeRating: number;
   latitude: number;
   longitude: number;
 }

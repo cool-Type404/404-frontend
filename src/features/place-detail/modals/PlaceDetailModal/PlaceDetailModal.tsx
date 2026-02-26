@@ -65,10 +65,7 @@ export default function PlaceDetailModal({
     setBookmarked((v) => !v);
   }, [bookmarked, onBookmarkToggle]);
 
-  const ratingText =
-    !place.avg_rating || place.reviews.length === 0
-      ? '평점 없음'
-      : `${place.avg_rating.toFixed(1)} / 5`;
+  const ratingText = !place.avg_rating ? '평점 없음' : `${place.avg_rating.toFixed(1)} / 5`;
 
   const scrollTo = useCallback((key: TabKey) => {
     const node =

@@ -60,32 +60,41 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
   const place: PlaceDetail | null =
     detailData && storeIdNum != null
       ? {
-          store_info_id: detailData.storeId,
+          store_info_id: detailData.storeInfoPK,
           store_name: detailData.storeName,
-          store_type: detailData.storeType,
-          current_open: detailData.currentOpen,
+          store_type: detailData.storeCategory,
+          current_open: detailData.isOpen,
           avg_rating: detailData.avgRating,
           store_number: detailData.storeNumber,
           bookmarked: isBookmarked,
           store_menus: detailData.menus.map((m) => ({
             menu_id: m.menuId,
-            store_info_id: detailData.storeId,
+            store_info_id: detailData.storeInfoPK,
             menu_name: m.menuName,
             price: Number(m.price),
             is_rec: m.isRec,
             menu_img: m.menuImg ?? null,
           })),
-          store_seat: {
-            seat_id: 0,
-            store_info_id: detailData.storeId,
-            single_seat: detailData.seats.singleSeat,
-            double_seat: detailData.seats.doubleSeat,
-            triple_seat: detailData.seats.tripleSeat,
-          },
+          store_seat:
+            detailData.seats.length > 0
+              ? {
+                  seat_id: 0,
+                  store_info_id: detailData.storeInfoPK,
+                  single_seat: detailData.seats[0].singleSeat,
+                  double_seat: detailData.seats[0].doubleSeat,
+                  triple_seat: detailData.seats[0].tripleSeat,
+                }
+              : {
+                  seat_id: 0,
+                  store_info_id: detailData.storeInfoPK,
+                  single_seat: false,
+                  double_seat: false,
+                  triple_seat: false,
+                },
           reviews: [],
           opening_hours: detailData.openingHours.map((oh) => ({
             opening_hours_id: oh.openingHoursId,
-            store_info_id: detailData.storeId,
+            store_info_id: detailData.storeInfoPK,
             days: oh.days,
             start_time: oh.startTime,
             end_time: oh.endTime,
