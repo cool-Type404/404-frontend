@@ -47,9 +47,7 @@ export default function PlaceDetailModal({
   const reviewsRef = useRef<HTMLElement | null>(null);
   const hoursRef = useRef<HTMLElement | null>(null);
 
-  const getScrollContainer = () => {
-    return scrollRef.current?.parentElement as HTMLDivElement | null;
-  };
+  const getScrollContainer = () => scrollRef.current as HTMLDivElement | null;
 
   useEffect(() => {
     if (!open) return;
