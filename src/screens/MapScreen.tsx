@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import KakaoMap from '../components/KakaoMap';
 import Button from '../components/Button/Button';
@@ -8,6 +8,7 @@ import { CommonIcon } from '../components/CommonIcon/CommonIcon';
 import { FoodCategoryIcon } from '../components/FoodCategoryIcon';
 import PlaceDetailModalFlow from '@/features/place-detail/flow/PlaceDetailModalFlow';
 import { useRestaurantList } from '@/features/main-map/hooks/useRestaurantList';
+import { useStoreLocations } from '@/features/main-map/hooks/useStoreLocations';
 
 import styles from './MapScreen.module.css';
 
@@ -21,26 +22,14 @@ type FoodCategory =
   | 'bunsik'
   | 'etc';
 
-// type Store = {
-//   id: string;
-//   name: string;
-//   isOpen: boolean;
-//   rating: number;
-//   category: FoodCategory;
-// };
-
-// const MOCK_STORES: Store[] = [
-//   { id: '1', name: '요소쿠야코우', isOpen: true, rating: 4.6, category: 'japanese' },
-//   { id: '2', name: '서담헌', isOpen: true, rating: 4.8, category: 'chinese' },
-//   { id: '3', name: '가츠모토', isOpen: false, rating: 4.5, category: 'japanese' },
-//   { id: '4', name: '밥장인 돼지찌개', isOpen: true, rating: 4.2, category: 'korean' },
-//   { id: '5', name: '구씨네부엌', isOpen: false, rating: 4.5, category: 'western' },
-//   { id: '6', name: '연남토마', isOpen: true, rating: 4.6, category: 'cafe' },
-// ];
-
 export default function MapScreen() {
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
   const { data: stores = [], isLoading } = useRestaurantList();
+  const { data: locationsData } = useStoreLocations();
+
+  const handleMarkerClick = useCallback((storeId: number) => {
+    setSelectedStoreId(storeId);
+  }, []);
 
   return (
     <div className={styles.root}>
@@ -49,7 +38,17 @@ export default function MapScreen() {
       </header>
 
       <div className={styles.mapLayer}>
-        <KakaoMap />
+        <KakaoMap
+          markers={
+            locationsData?.stores.map((s) => ({
+              id: s.store_id,
+              lat: s.latitude,
+              lng: s.longitude,
+              name: '',
+            })) ?? []
+          }
+          onMarkerClick={handleMarkerClick}
+        />
       </div>
 
       <div className={styles.topLeft}>
