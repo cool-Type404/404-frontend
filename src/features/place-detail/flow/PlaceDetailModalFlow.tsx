@@ -60,7 +60,7 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
   const place: PlaceDetail | null =
     detailData && storeIdNum != null
       ? {
-          store_info_id: detailData.storeInfoPK,
+          storeInfoPK: detailData.storeInfoPK,
           store_name: detailData.storeName,
           store_type: detailData.storeCategory,
           current_open: detailData.isOpen,
@@ -69,7 +69,7 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
           bookmarked: isBookmarked,
           store_menus: detailData.menus.map((m) => ({
             menu_id: m.menuId,
-            store_info_id: detailData.storeInfoPK,
+            storeInfoPK: detailData.storeInfoPK,
             menu_name: m.menuName,
             price: Number(m.price),
             is_rec: m.isRec,
@@ -79,14 +79,14 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
             detailData.seats.length > 0
               ? {
                   seat_id: 0,
-                  store_info_id: detailData.storeInfoPK,
+                  storeInfoPK: detailData.storeInfoPK,
                   single_seat: detailData.seats[0].singleSeat,
                   double_seat: detailData.seats[0].doubleSeat,
                   triple_seat: detailData.seats[0].tripleSeat,
                 }
               : {
                   seat_id: 0,
-                  store_info_id: detailData.storeInfoPK,
+                  storeInfoPK: detailData.storeInfoPK,
                   single_seat: false,
                   double_seat: false,
                   triple_seat: false,
@@ -94,7 +94,7 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
           reviews: [],
           opening_hours: detailData.openingHours.map((oh) => ({
             opening_hours_id: oh.openingHoursId,
-            store_info_id: detailData.storeInfoPK,
+            storeInfoPK: detailData.storeInfoPK,
             days: oh.days,
             start_time: oh.startTime,
             end_time: oh.endTime,
@@ -112,7 +112,7 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
     if (reviewsData) {
       const converted: Review[] = reviewsData.map((r) => ({
         review_id: r.reviewId,
-        store_info_id: storeIdNum ?? 0,
+        storeInfoPK: storeIdNum ?? 0,
         user_id: r.userId,
         review_contents: r.reviewContents,
         review_rating: r.reviewRating,
@@ -232,7 +232,7 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
         open={open}
         onClose={onClose}
         onBack={handleBack}
-        placeId={place.store_info_id}
+        placeId={place.storeInfoPK}
         placeName={place.store_name}
         onSubmitReview={handleSubmitReview}
       />

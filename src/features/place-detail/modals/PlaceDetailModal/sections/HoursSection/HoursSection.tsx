@@ -10,6 +10,11 @@ type Props = {
   sectionRef?: RefObject<HTMLElement | null>;
 };
 
+function formatTime(time: string | null | undefined): string {
+  if (!time) return '';
+  return time.slice(0, 5);
+}
+
 export default function HoursSection({ opening_hours, sectionRef }: Props) {
   return (
     <>
@@ -25,11 +30,11 @@ export default function HoursSection({ opening_hours, sectionRef }: Props) {
                 <span className={styles.closed}>정기휴무</span>
               ) : (
                 <span className={styles.time}>
-                  {h.start_time} ~ {h.end_time}
+                  {formatTime(h.start_time)} ~ {formatTime(h.end_time)}
                   {h.break_start_time && h.break_end_time ? (
                     <span className={styles.break}>
                       {' '}
-                      (브레이크 {h.break_start_time}~{h.break_end_time})
+                      (브레이크 {formatTime(h.break_start_time)}~{formatTime(h.break_end_time)})
                     </span>
                   ) : null}
                 </span>
