@@ -15,24 +15,36 @@
 }
 
 .headerLeft {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 40px;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
 }
 
-.headerCenterOverlay {
-  position: absolute;
-  top: 20px;
-  height: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
+.headerSide {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
 
+.headerCenter {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+}
 
+.modalHeaderCenter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.headerRightSpacer {
+  flex: 0 0 auto;
+  visibility: hidden;
   pointer-events: none;
 }
 
@@ -41,7 +53,6 @@
   font-weight: 700;
   color: var(--color-muted);
   white-space: nowrap;
-  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
 }

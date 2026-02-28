@@ -8,6 +8,7 @@ type ModalProps = {
   title?: string;
   titleAlign?: 'left' | 'center';
   headerLeft?: React.ReactNode;
+  headerCenter?: React.ReactNode;
   headerRight?: React.ReactNode;
   children: React.ReactNode;
   closeOnOverlayClick?: boolean;
@@ -22,6 +23,7 @@ export default function Modal({
   titleAlign = 'center',
   children,
   headerLeft,
+  headerCenter,
   headerRight,
   closeOnOverlayClick = false,
   closeOnEsc = false,
@@ -78,7 +80,10 @@ export default function Modal({
             {titleAlign === 'left' ? renderTitle : null}
           </div>
 
-          <div className={styles.headerCenter}>{titleAlign === 'center' ? renderTitle : null}</div>
+          <div className={styles.headerCenter}>
+            {headerCenter}
+            {titleAlign === 'center' ? renderTitle : null}
+          </div>
 
           <div className={styles.headerRight}>{headerRight}</div>
         </div>

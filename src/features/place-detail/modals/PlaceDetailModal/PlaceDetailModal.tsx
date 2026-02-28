@@ -125,22 +125,22 @@ export default function PlaceDetailModal({
   if (!open) return null;
 
   const HeaderLeft = (
-    <div className={styles.headerLeft}>
-      <IconButton
-        ariaLabel={bookmarked ? '북마크 해제' : '북마크'}
-        tone="green"
-        size={25}
-        onClick={handleBookmarkClick}
-      >
-        <CommonIcon name={bookmarked ? 'bookmarkfiiled' : 'bookmarkline'} />
-      </IconButton>
+    <IconButton
+      ariaLabel={bookmarked ? '북마크 해제' : '북마크'}
+      tone="green"
+      size={25}
+      onClick={handleBookmarkClick}
+    >
+      <CommonIcon name={bookmarked ? 'bookmarkfiiled' : 'bookmarkline'} />
+    </IconButton>
+  );
 
-      <div className={styles.headerCenterOverlay} aria-hidden="true">
-        <Chip variant={place.current_open ? 'open' : 'closed'} size="sm">
-          {place.current_open ? '영업중' : '영업전'}
-        </Chip>
-        <span className={styles.headerTitleText}>{place.store_name}</span>
-      </div>
+  const HeaderCenter = (
+    <div className={styles.modalHeaderCenter}>
+      <Chip variant={place.current_open ? 'open' : 'closed'} size="sm">
+        {place.current_open ? '영업중' : '영업전'}
+      </Chip>
+      <span className={styles.headerTitleText}>{place.store_name}</span>
     </div>
   );
 
@@ -161,8 +161,8 @@ export default function PlaceDetailModal({
     <Modal
       open={open}
       onClose={onClose}
-      titleAlign="left"
       headerLeft={HeaderLeft}
+      headerCenter={HeaderCenter}
       headerRight={HeaderRight}
       closeOnEsc={false}
       closeOnOverlayClick={false}
