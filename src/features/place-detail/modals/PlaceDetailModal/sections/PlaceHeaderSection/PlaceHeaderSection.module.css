@@ -3,16 +3,12 @@
 }
 
 .heroImageBox {
-  height: 150px;
+  width: 100%;
   border-radius: 16px;
   overflow: hidden;
   background: #f3f4f6;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
   margin-top: 6px;
+  aspect-ratio: 16 / 9;
 }
 
 .heroImage {
