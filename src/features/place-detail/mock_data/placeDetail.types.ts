@@ -2,7 +2,7 @@ export type SeatType = 1 | 2 | 4;
 
 export type StoreSeat = {
   seat_id: string | number;
-  store_info_id: number;
+  storeInfoPK: number;
 
   single_seat: boolean;
   double_seat: boolean;
@@ -11,7 +11,7 @@ export type StoreSeat = {
 
 export type StoreMenu = {
   menu_id: string | number;
-  store_info_id: number;
+  storeInfoPK: number;
 
   menu_name: string;
   price: number;
@@ -21,7 +21,7 @@ export type StoreMenu = {
 
 export type OpeningHours = {
   opening_hours_id: string | number;
-  store_info_id: number;
+  storeInfoPK: number;
 
   days: string;
   start_time: string;
@@ -45,7 +45,7 @@ export type ReviewImage = {
 
 export type Review = {
   review_id: string | number;
-  store_info_id: number;
+  storeInfoPK: number;
   user_id: string | number;
 
   review_contents: string;
@@ -61,7 +61,7 @@ export type Review = {
 };
 
 export type PlaceDetail = {
-  store_info_id: number;
+  storeInfoPK: number;
 
   store_name: string;
   store_number: string;
