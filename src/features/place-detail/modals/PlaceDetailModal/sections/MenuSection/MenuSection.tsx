@@ -18,26 +18,31 @@ export default function MenuSection({ menus, sectionRef }: Props) {
 
       <ul className={styles.menuList}>
         {menus.map((m, index) => (
-          <div key={m.menu_id}>
-            <li className={styles.menuItem}>
-              {/* 이미지 */}
+          <li key={m.menu_id} className={styles.menuItemWrapper}>
+            <div className={styles.menuItem}>
               <div className={styles.menuImageBox}>
                 {m.menu_img ? (
                   <img
-                    src={`/api/stores/menu/image/${m.menu_img}`}
+                    src={`${import.meta.env.VITE_API_BASE_URL}${m.menu_img}`}
                     alt={m.menu_name}
                     className={styles.menuImage}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.removeAttribute('hidden');
+                    }}
                   />
-                ) : (
-                  <div className={styles.menuImagePlaceholder}>이미지 준비중</div>
-                )}
+                ) : null}
+                <div
+                  className={styles.menuImagePlaceholder}
+                  hidden={!!m.menu_img}
+                >
+                  이미지 준비중
+                </div>
               </div>
 
-              {/* 텍스트 */}
               <div className={styles.menuContent}>
                 <div className={styles.menuNameRow}>
                   <span className={styles.menuName}>{m.menu_name}</span>
-
                   {m.is_rec && (
                     <Chip variant="recommend" size="sm">
                       <CommonIcon
@@ -49,13 +54,12 @@ export default function MenuSection({ menus, sectionRef }: Props) {
                     </Chip>
                   )}
                 </div>
-
                 <div className={styles.menuPrice}>{m.price.toLocaleString()}원</div>
               </div>
-            </li>
+            </div>
 
             {index !== menus.length - 1 && <Divider color="#e5e7eb" />}
-          </div>
+          </li>
         ))}
       </ul>
     </section>
