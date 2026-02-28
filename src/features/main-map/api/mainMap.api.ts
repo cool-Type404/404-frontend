@@ -38,3 +38,14 @@ export const getStoreLocations = async (): Promise<StoreLocationsResponse> => {
     throw parseApiError(error);
   }
 };
+
+export const searchStores = async (storeName: string): Promise<StoreListItem[]> => {
+  try {
+    const { data } = await http.get('/api/stores/search', {
+      params: { storeName },
+    });
+    return data;
+  } catch (error) {
+    throw parseApiError(error);
+  }
+};

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useDebounce } from 'use-debounce';
 
 import KakaoMap from '../components/KakaoMap';
 import Button from '../components/Button/Button';
@@ -9,6 +10,7 @@ import { FoodCategoryIcon } from '../components/FoodCategoryIcon';
 import PlaceDetailModalFlow from '@/features/place-detail/flow/PlaceDetailModalFlow';
 import { useRestaurantList } from '@/features/main-map/hooks/useRestaurantList';
 import { useStoreLocations } from '@/features/main-map/hooks/useStoreLocations';
+import { useStoreSearch } from '@/features/main-map/hooks/useStoreSearch';
 
 import styles from './MapScreen.module.css';
 
@@ -24,8 +26,15 @@ type FoodCategory =
 
 export default function MapScreen() {
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery] = useDebounce(searchQuery, 400);
+
   const { data: stores = [], isLoading } = useRestaurantList();
+  const { data: searchResults, isFetching: isSearching } = useStoreSearch(debouncedQuery);
   const { data: locationsData } = useStoreLocations();
+
+  // 검색어가 있으면 검색 결과, 없으면 전체 목록
+  const displayedStores = debouncedQuery.trim() ? (searchResults ?? []) : stores;
 
   const handleMarkerClick = useCallback((storeId: number) => {
     setSelectedStoreId(storeId);
@@ -72,14 +81,18 @@ export default function MapScreen() {
             variant="search"
             placeholder="지금, 먹고 싶은 음식은?"
             leftIcon={<CommonIcon name="search" size={22} />}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
         <div className={styles.list}>
-          {isLoading ? (
+          {isLoading || isSearching ? (
             <div>로딩 중...</div>
+          ) : displayedStores.length === 0 ? (
+            <div className={styles.emptyState}>검색 결과가 없습니다.</div>
           ) : (
-            stores.map((s, index) => (
+            displayedStores.map((s, index) => (
               <div
                 key={s.storeInfoPK ?? index}
                 className={`${styles.card} ${selectedStoreId === s.storeInfoPK ? styles.cardSelected : ''}`}
