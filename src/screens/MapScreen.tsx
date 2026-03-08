@@ -123,6 +123,8 @@ export default function MapScreen() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isMyPageOpen, setIsMyPageOpen] = useState(false);
   const [isPlaceRequestOpen, setIsPlaceRequestOpen] = useState(false);
+  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  const [isWithdrawDoneOpen, setIsWithdrawDoneOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [appliedSort, setAppliedSort] = useState<SortKey>('recommend');
   const [draftSort, setDraftSort] = useState<SortKey>('recommend');
@@ -347,6 +349,16 @@ export default function MapScreen() {
 
   const handleOpenPlaceRequest = () => {
     setIsPlaceRequestOpen(true);
+  };
+
+  const handleOpenWithdraw = () => {
+    setIsMenuOpen(false);
+    setIsWithdrawOpen(true);
+  };
+
+  const handleCompleteWithdraw = () => {
+    setIsWithdrawOpen(false);
+    setIsWithdrawDoneOpen(true);
   };
 
   const handleCloseLogin = () => {
@@ -652,6 +664,70 @@ export default function MapScreen() {
         isLoggedIn={isLoggedIn}
         onNeedLogin={() => setIsLoginOpen(true)}
       />
+      <Modal
+        open={isWithdrawOpen}
+        onClose={() => setIsWithdrawOpen(false)}
+        closeOnOverlayClick
+        className={styles.withdrawModal}
+        headerRight={
+          <button
+            type="button"
+            className={styles.withdrawCloseButton}
+            aria-label="회원 탈퇴 닫기"
+            onClick={() => setIsWithdrawOpen(false)}
+          >
+            <CommonIcon name="crossclose" size={20} />
+          </button>
+        }
+      >
+        <div className={styles.withdrawBody}>
+          <h2 className={styles.withdrawTitle}>회원 탈퇴하기</h2>
+
+          <div className={styles.withdrawImagePlaceholder} aria-hidden="true" />
+
+          <p className={styles.withdrawHeadline}>정말 탈퇴하시겠습니까?</p>
+          <p className={styles.withdrawDescription}>
+            회원 탈퇴 시
+            <br />
+            계정 정보와 이용 기록은 모두 삭제되며,
+            <br />
+            삭제된 정보는 복구할 수 없습니다.
+          </p>
+
+          <button type="button" className={styles.withdrawSubmitButton} onClick={handleCompleteWithdraw}>
+            탈퇴하기
+          </button>
+        </div>
+      </Modal>
+      <Modal
+        open={isWithdrawDoneOpen}
+        onClose={() => setIsWithdrawDoneOpen(false)}
+        closeOnOverlayClick
+        className={styles.withdrawModal}
+        headerRight={
+          <button
+            type="button"
+            className={styles.withdrawCloseButton}
+            aria-label="회원 탈퇴 완료 닫기"
+            onClick={() => setIsWithdrawDoneOpen(false)}
+          >
+            <CommonIcon name="crossclose" size={20} />
+          </button>
+        }
+        >
+          <div className={styles.withdrawBody}>
+            <div className={styles.withdrawDoneIcon} aria-hidden="true">
+              <CommonIcon name="check" size={56} />
+            </div>
+
+          <p className={styles.withdrawDoneHeadline}>회원 탈퇴가 완료되었습니다.</p>
+          <p className={styles.withdrawDoneDescription}>
+            그동안 홍밥을
+            <br />
+            이용해주셔서 감사합니다.
+          </p>
+        </div>
+      </Modal>
 
       {isMenuOpen ? (
         <div className={styles.menuOverlay} onClick={() => setIsMenuOpen(false)} role="presentation">
@@ -685,7 +761,7 @@ export default function MapScreen() {
                   <span>로그아웃</span>
                 </button>
 
-                <button type="button" className={styles.menuAction}>
+                <button type="button" className={styles.menuAction} onClick={handleOpenWithdraw}>
                   <span className={styles.menuActionIcon}>
                     <CommonIcon name="ban" size={24} />
                   </span>
@@ -695,10 +771,16 @@ export default function MapScreen() {
             ) : (
               <div className={styles.menuGuestContent}>
                 <button type="button" className={styles.menuGuestPrimary} onClick={handleOpenLogin}>
-                  로그인
+                  <span className={styles.menuGuestButtonIcon}>
+                    <CommonIcon name="exit" size={18} />
+                  </span>
+                  <span>로그인</span>
                 </button>
                 <button type="button" className={styles.menuGuestSecondary} onClick={handleOpenSignUp}>
-                  회원가입
+                  <span className={styles.menuGuestButtonIcon}>
+                    <CommonIcon name="check" size={18} />
+                  </span>
+                  <span>회원가입</span>
                 </button>
               </div>
             )}
