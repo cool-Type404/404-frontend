@@ -59,7 +59,7 @@
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(0, 0, 0, 0.16);
+  background: rgba(255, 255, 255, 0.56);
 }
 
 .menuPanel {
@@ -69,7 +69,7 @@
   width: 188px;
   min-height: 310px;
   padding: 20px 16px 22px;
-  background: #e9e9e9;
+  background: #ffffff;
   box-shadow: 8px 0 20px rgba(0, 0, 0, 0.12);
 }
 
@@ -141,6 +141,10 @@
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .menuGuestPrimary {
@@ -151,6 +155,13 @@
 .menuGuestSecondary {
   background: #ffffff;
   color: #6fbf3a;
+  box-shadow: inset 0 0 0 1px rgba(111, 191, 58, 0.2);
+}
+
+.menuGuestButtonIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .filterButton {
@@ -402,6 +413,14 @@
   background: #ffffff;
 }
 
+.withdrawModal {
+  width: min(330px, calc(100vw - 28px));
+  min-height: 430px;
+  padding: 18px 18px 22px;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
 .signUpBody {
   display: flex;
   flex-direction: column;
@@ -412,6 +431,96 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.withdrawBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  min-height: 370px;
+  padding-top: 10px;
+  justify-content: space-between;
+}
+
+.withdrawCloseButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #7abf43;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.withdrawTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #141414;
+}
+
+.withdrawImagePlaceholder {
+  width: 140px;
+  height: 140px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #f3f6ee 0%, #e7eee0 100%);
+}
+
+.withdrawHeadline {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #151515;
+}
+
+.withdrawDescription {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.72);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.withdrawDoneIcon {
+  width: auto;
+  height: auto;
+  background: transparent;
+  color: #72c937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.withdrawDoneHeadline {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #151515;
+}
+
+.withdrawDoneDescription {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.72);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.withdrawSubmitButton {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  height: 46px;
+  border-radius: 12px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
 }
 
 .signUpTitle {
