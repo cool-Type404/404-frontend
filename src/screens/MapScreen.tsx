@@ -15,6 +15,7 @@ import { useStoreLocations } from '@/features/main-map/hooks/useStoreLocations';
 import { useStoreSearch } from '@/features/main-map/hooks/useStoreSearch';
 import { useFilteredStores } from '@/features/main-map/hooks/useFilteredStores';
 import MyPageModal from '@/features/mypage/components/MyPageModal/MyPageModal';
+import PlaceRequestModal from '@/features/place-request/components/PlaceRequestModal/PlaceRequestModal';
 import { getStoreDetail, getStoreReviews } from '@/features/place-detail/api/placeDetail.api';
 import PlaceDetailModalFlow from '@/features/place-detail/flow/PlaceDetailModalFlow';
 
@@ -121,6 +122,7 @@ export default function MapScreen() {
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isMyPageOpen, setIsMyPageOpen] = useState(false);
+  const [isPlaceRequestOpen, setIsPlaceRequestOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [appliedSort, setAppliedSort] = useState<SortKey>('recommend');
   const [draftSort, setDraftSort] = useState<SortKey>('recommend');
@@ -343,6 +345,10 @@ export default function MapScreen() {
     setIsMyPageOpen(true);
   };
 
+  const handleOpenPlaceRequest = () => {
+    setIsPlaceRequestOpen(true);
+  };
+
   const handleCloseLogin = () => {
     setIsLoginOpen(false);
     setShowLoginPassword(false);
@@ -518,6 +524,10 @@ export default function MapScreen() {
 
   return (
     <div className={styles.root}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>홍밥</h1>
+      </header>
+
       <div className={styles.mapLayer}>
         <KakaoMap markers={mapMarkers} onMarkerClick={handleMarkerClick} />
         <div className={styles.mapDimmer} />
@@ -615,7 +625,13 @@ export default function MapScreen() {
       </aside>
 
       <div className={styles.bottomLeft}>
-        <Button variant="primary" height={48} radius={9999} className={styles.recommendButton}>
+        <Button
+          variant="primary"
+          height={48}
+          radius={9999}
+          className={styles.recommendButton}
+          onClick={handleOpenPlaceRequest}
+        >
           <span className={styles.inlineIcon}>
             <CommonIcon name="plus" size={16} />
           </span>
@@ -630,6 +646,12 @@ export default function MapScreen() {
       />
 
       <MyPageModal open={isMyPageOpen} onClose={() => setIsMyPageOpen(false)} />
+      <PlaceRequestModal
+        open={isPlaceRequestOpen}
+        onClose={() => setIsPlaceRequestOpen(false)}
+        isLoggedIn={isLoggedIn}
+        onNeedLogin={() => setIsLoginOpen(true)}
+      />
 
       {isMenuOpen ? (
         <div className={styles.menuOverlay} onClick={() => setIsMenuOpen(false)} role="presentation">

@@ -1,0 +1,140 @@
+.modal {
+  width: min(460px, calc(100vw - 24px));
+  border-radius: 24px;
+  background: #f7f9f2;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.notice {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #eef7de;
+  color: #587424;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #20281a;
+}
+
+.hint {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a9380;
+}
+
+.input,
+.select {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #d6ded0;
+  border-radius: 14px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #20281a;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.input::placeholder {
+  color: #a0a89a;
+}
+
+.errorText,
+.successText {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.errorText {
+  color: #db5f5f;
+}
+
+.successText {
+  color: #58a42b;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.secondaryButton,
+.primaryButton {
+  appearance: none;
+  border: 0;
+  height: 48px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  background: #ffffff;
+  color: #6fbf3a;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
+.primaryButton {
+  background: #6fbf3a;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(111, 191, 58, 0.24);
+}
+
+.secondaryButton:disabled,
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.headerButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #6fbf3a;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .modal {
+    width: calc(100vw - 20px);
+    border-radius: 20px;
+  }
+
+  .actions {
+    grid-template-columns: 1fr;
+  }
+}
