@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 import { useQueries } from '@tanstack/react-query';
 
@@ -8,6 +8,7 @@ import Input from '../components/Input/Input';
 import Chip from '../components/Chip/Chip';
 import Modal from '../components/Modal/Modal';
 import { CommonIcon } from '../components/CommonIcon/CommonIcon';
+import { login, logout, sendVerificationEmail, signUp, verifyEmailCode } from '@/features/auth/api/auth.api';
 import { useRestaurantList } from '@/features/main-map/hooks/useRestaurantList';
 import { useStoreLocations } from '@/features/main-map/hooks/useStoreLocations';
 import { useStoreSearch } from '@/features/main-map/hooks/useStoreSearch';
@@ -57,6 +58,8 @@ const sortOptions: Array<{ key: SortKey; label: string }> = [
   { key: 'reviews', label: '리뷰 많은순' },
 ];
 
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
+
 const getEatingLevelRank = (value: string | undefined) => {
   if (!value) return Number.MAX_SAFE_INTEGER;
   const rank = Number.parseInt(value, 10);
@@ -81,11 +84,39 @@ export default function MapScreen() {
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [appliedSort, setAppliedSort] = useState<SortKey>('recommend');
   const [draftSort, setDraftSort] = useState<SortKey>('recommend');
   const [appliedCategories, setAppliedCategories] = useState<StoreCategory[]>([]);
   const [draftCategories, setDraftCategories] = useState<StoreCategory[]>([]);
   const [debouncedQuery] = useDebounce(searchQuery, 300);
+
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpCode, setSignUpCode] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [signUpNickname, setSignUpNickname] = useState('');
+  const [signUpGender, setSignUpGender] = useState('');
+  const [signUpAge, setSignUpAge] = useState('');
+  const [signUpEatingLevel, setSignUpEatingLevel] = useState('');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [signUpMessage, setSignUpMessage] = useState('');
+  const [signUpError, setSignUpError] = useState('');
+
+  useEffect(() => {
+    setIsLoggedIn(Boolean(window.localStorage.getItem('accessToken')));
+  }, []);
 
   const {
     data: stores = [],
@@ -109,24 +140,14 @@ export default function MapScreen() {
   } = useStoreSearch(debouncedQuery);
 
   const baseStores = useMemo(() => {
-    if (debouncedQuery.trim()) {
-      return searchedStores;
-    }
-
-    if (appliedCategories.length > 0) {
-      return filteredStores;
-    }
-
+    if (debouncedQuery.trim()) return searchedStores;
+    if (appliedCategories.length > 0) return filteredStores;
     return stores;
   }, [appliedCategories.length, debouncedQuery, filteredStores, searchedStores, stores]);
 
   const baseSummaries = useMemo(() => {
     const summaries = baseStores.map(toStoreSummary);
-
-    if (!debouncedQuery.trim() || appliedCategories.length === 0) {
-      return summaries;
-    }
-
+    if (!debouncedQuery.trim() || appliedCategories.length === 0) return summaries;
     return summaries.filter((store) => appliedCategories.includes(store.category));
   }, [appliedCategories, baseStores, debouncedQuery]);
 
@@ -137,10 +158,7 @@ export default function MapScreen() {
           queryKey: ['storeEatingLevel', store.id],
           queryFn: async () => {
             const detail = await getStoreDetail(store.id);
-            return {
-              storeId: store.id,
-              eatingLevel: detail.eatingLevel,
-            };
+            return { storeId: store.id, eatingLevel: detail.eatingLevel };
           },
           staleTime: 5 * 60 * 1000,
         };
@@ -151,10 +169,7 @@ export default function MapScreen() {
           queryKey: ['storeReviewCount', store.id],
           queryFn: async () => {
             const reviews = await getStoreReviews(store.id);
-            return {
-              storeId: store.id,
-              reviewCount: reviews.length,
-            };
+            return { storeId: store.id, reviewCount: reviews.length };
           },
           staleTime: 5 * 60 * 1000,
         };
@@ -168,29 +183,33 @@ export default function MapScreen() {
     }),
   });
 
-  const eatingLevelMap = useMemo(() => {
-    return new Map(
-      sortMetaQueries
-        .map((query) => query.data)
-        .filter(
-          (item): item is { storeId: number; eatingLevel: string } =>
-            Boolean(item && 'eatingLevel' in item && typeof item.eatingLevel === 'string'),
-        )
-        .map((item) => [item.storeId, item.eatingLevel]),
-    );
-  }, [sortMetaQueries]);
+  const eatingLevelMap = useMemo(
+    () =>
+      new Map(
+        sortMetaQueries
+          .map((query) => query.data)
+          .filter(
+            (item): item is { storeId: number; eatingLevel: string } =>
+              Boolean(item && 'eatingLevel' in item && typeof item.eatingLevel === 'string'),
+          )
+          .map((item) => [item.storeId, item.eatingLevel]),
+      ),
+    [sortMetaQueries],
+  );
 
-  const reviewCountMap = useMemo(() => {
-    return new Map(
-      sortMetaQueries
-        .map((query) => query.data)
-        .filter(
-          (item): item is { storeId: number; reviewCount: number } =>
-            Boolean(item && 'reviewCount' in item && typeof item.reviewCount === 'number'),
-        )
-        .map((item) => [item.storeId, item.reviewCount]),
-    );
-  }, [sortMetaQueries]);
+  const reviewCountMap = useMemo(
+    () =>
+      new Map(
+        sortMetaQueries
+          .map((query) => query.data)
+          .filter(
+            (item): item is { storeId: number; reviewCount: number } =>
+              Boolean(item && 'reviewCount' in item && typeof item.reviewCount === 'number'),
+          )
+          .map((item) => [item.storeId, item.reviewCount]),
+      ),
+    [sortMetaQueries],
+  );
 
   const displayedStores = useMemo(() => {
     const copied = [...baseSummaries];
@@ -208,7 +227,6 @@ export default function MapScreen() {
       case 'reviews':
         copied.sort((a, b) => (reviewCountMap.get(b.id) ?? -1) - (reviewCountMap.get(a.id) ?? -1));
         break;
-      case 'recommend':
       default:
         break;
     }
@@ -216,33 +234,28 @@ export default function MapScreen() {
     return copied;
   }, [appliedSort, baseSummaries, eatingLevelMap, reviewCountMap]);
 
-  const locationMap = useMemo(() => {
-    return new Map(
-      (locationsData?.stores ?? []).map((store) => [
-        store.store_id,
-        { lat: store.latitude, lng: store.longitude },
-      ]),
-    );
-  }, [locationsData]);
+  const locationMap = useMemo(
+    () =>
+      new Map(
+        (locationsData?.stores ?? []).map((store) => [
+          store.store_id,
+          { lat: store.latitude, lng: store.longitude },
+        ]),
+      ),
+    [locationsData],
+  );
 
-  const mapMarkers = useMemo(() => {
-    return displayedStores
-      .map((store) => {
-        const location = locationMap.get(store.id);
-
-        if (!location) {
-          return null;
-        }
-
-        return {
-          id: store.id,
-          lat: location.lat,
-          lng: location.lng,
-          name: store.name,
-        };
-      })
-      .filter((marker): marker is NonNullable<typeof marker> => marker !== null);
-  }, [displayedStores, locationMap]);
+  const mapMarkers = useMemo(
+    () =>
+      displayedStores
+        .map((store) => {
+          const location = locationMap.get(store.id);
+          if (!location) return null;
+          return { id: store.id, lat: location.lat, lng: location.lng, name: store.name };
+        })
+        .filter((marker): marker is NonNullable<typeof marker> => marker !== null),
+    [displayedStores, locationMap],
+  );
 
   useEffect(() => {
     if (displayedStores.length === 0) {
@@ -250,9 +263,7 @@ export default function MapScreen() {
       return;
     }
 
-    const selectedStillVisible = displayedStores.some((store) => store.id === selectedStoreId);
-
-    if (!selectedStillVisible) {
+    if (!displayedStores.some((store) => store.id === selectedStoreId)) {
       setSelectedStoreId(displayedStores[0].id);
     }
   }, [displayedStores, selectedStoreId]);
@@ -265,9 +276,7 @@ export default function MapScreen() {
 
   const handleToggleDraftCategory = (category: StoreCategory) => {
     setDraftCategories((current) =>
-      current.includes(category)
-        ? current.filter((value) => value !== category)
-        : [...current, category],
+      current.includes(category) ? current.filter((value) => value !== category) : [...current, category],
     );
   };
 
@@ -282,7 +291,182 @@ export default function MapScreen() {
     setIsFilterOpen(false);
   };
 
-  const isLoading = isStoreListLoading || isLocationsLoading || (appliedCategories.length > 0 && isFilteredStoresLoading);
+  const handleOpenSignUp = () => {
+    setIsMenuOpen(false);
+    setSignUpMessage('');
+    setSignUpError('');
+    setIsSignUpOpen(true);
+  };
+
+  const handleOpenLogin = () => {
+    setIsMenuOpen(false);
+    setLoginError('');
+    setIsLoginOpen(true);
+  };
+
+  const handleCloseLogin = () => {
+    setIsLoginOpen(false);
+    setShowLoginPassword(false);
+  };
+
+  const handleCloseSignUp = () => {
+    setIsSignUpOpen(false);
+    setShowSignUpPassword(false);
+  };
+
+  const handleSendVerification = async () => {
+    if (!signUpEmail.trim()) {
+      setSignUpError('이메일을 먼저 입력해 주세요.');
+      setSignUpMessage('');
+      return;
+    }
+
+    try {
+      setIsSendingCode(true);
+      setSignUpError('');
+      setSignUpMessage('');
+      setIsEmailVerified(false);
+      await sendVerificationEmail({ email: signUpEmail.trim() });
+      setSignUpMessage('인증 메일을 전송했습니다.');
+    } catch (error) {
+      setSignUpError(error instanceof Error ? error.message : '인증 메일 전송에 실패했습니다.');
+      setSignUpMessage('');
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!signUpEmail.trim() || !signUpCode.trim()) {
+      setSignUpError('이메일과 인증 코드를 입력해 주세요.');
+      setSignUpMessage('');
+      return;
+    }
+
+    try {
+      setIsVerifyingCode(true);
+      setSignUpError('');
+      setSignUpMessage('');
+      await verifyEmailCode({ email: signUpEmail.trim(), authCode: signUpCode.trim() });
+      setIsEmailVerified(true);
+      setSignUpMessage('이메일 인증이 완료되었습니다.');
+    } catch (error) {
+      const message =
+        error instanceof Error && 'status' in error && (error as { status?: number }).status === 400
+          ? '인증 코드가 올바르지 않거나 만료되었습니다.'
+          : error instanceof Error
+            ? error.message
+            : '인증 코드 확인에 실패했습니다.';
+      setIsEmailVerified(false);
+      setSignUpError(message);
+      setSignUpMessage('');
+    } finally {
+      setIsVerifyingCode(false);
+    }
+  };
+
+  const handleSubmitSignUp = async () => {
+    if (!signUpEmail.trim() || !signUpPassword.trim() || !signUpNickname.trim() || !signUpEatingLevel) {
+      setSignUpError('필수 항목을 모두 입력해 주세요.');
+      setSignUpMessage('');
+      return;
+    }
+
+    if (!isEmailVerified) {
+      setSignUpError('이메일 인증을 먼저 완료해 주세요.');
+      setSignUpMessage('');
+      return;
+    }
+
+    if (signUpPassword.length < 8 || signUpPassword.length > 20 || !passwordPattern.test(signUpPassword)) {
+      setSignUpError('비밀번호는 8~20자이며 영문 대소문자, 숫자, 특수문자를 모두 포함해야 합니다.');
+      setSignUpMessage('');
+      return;
+    }
+
+    if (signUpNickname.trim().length < 2 || signUpNickname.trim().length > 10) {
+      setSignUpError('닉네임은 2자 이상 10자 이하로 입력해 주세요.');
+      setSignUpMessage('');
+      return;
+    }
+
+    if (signUpEmail.trim().length > 50) {
+      setSignUpError('이메일은 50자 이하로 입력해 주세요.');
+      setSignUpMessage('');
+      return;
+    }
+
+    try {
+      setIsSigningUp(true);
+      setSignUpError('');
+      setSignUpMessage('');
+      await signUp({
+        email: signUpEmail.trim(),
+        password: signUpPassword,
+        nickname: signUpNickname.trim(),
+        gender: signUpGender || undefined,
+        age: signUpAge || undefined,
+        eatingLevel: signUpEatingLevel,
+      });
+      setSignUpMessage('회원가입이 완료되었습니다.');
+      setSignUpCode('');
+      setSignUpPassword('');
+      setSignUpNickname('');
+      setSignUpGender('');
+      setSignUpAge('');
+      setSignUpEatingLevel('');
+      setIsEmailVerified(false);
+      setShowSignUpPassword(false);
+      window.setTimeout(() => setIsSignUpOpen(false), 600);
+    } catch (error) {
+      setSignUpError(error instanceof Error ? error.message : '회원가입에 실패했습니다.');
+      setSignUpMessage('');
+    } finally {
+      setIsSigningUp(false);
+    }
+  };
+
+  const handleSubmitLogin = async () => {
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setLoginError('이메일과 비밀번호를 입력해 주세요.');
+      return;
+    }
+
+    try {
+      setIsLoggingIn(true);
+      setLoginError('');
+      const response = await login({ email: loginEmail.trim(), password: loginPassword });
+      window.localStorage.setItem('accessToken', response.accessToken);
+      window.localStorage.setItem('refreshToken', response.refreshToken);
+      window.localStorage.setItem('loginEmail', response.email);
+      setIsLoggedIn(true);
+      setIsLoginOpen(false);
+      setLoginEmail('');
+      setLoginPassword('');
+      setShowLoginPassword(false);
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : '로그인에 실패했습니다.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // Ignore server logout failure and clear local session anyway.
+    } finally {
+      window.localStorage.removeItem('accessToken');
+      window.localStorage.removeItem('refreshToken');
+      window.localStorage.removeItem('loginEmail');
+      setIsLoggedIn(false);
+      setIsMenuOpen(false);
+    }
+  };
+
+  const isLoading =
+    isStoreListLoading || isLocationsLoading || (appliedCategories.length > 0 && isFilteredStoresLoading);
   const isSortMetaLoading =
     (appliedSort === 'eatingLevel' || appliedSort === 'reviews') &&
     sortMetaQueries.some((query) => query.isLoading || query.isFetching);
@@ -303,18 +487,14 @@ export default function MapScreen() {
           radius={24}
           aria-label="메뉴 열기"
           className={styles.menuButton}
+          onClick={() => setIsMenuOpen(true)}
         >
           <CommonIcon name="hamburger" size={40} variant="inherit" />
         </Button>
       </div>
 
       <div className={styles.topCenter}>
-        <button
-          type="button"
-          className={styles.filterButton}
-          aria-label="필터"
-          onClick={handleOpenFilter}
-        >
+        <button type="button" className={styles.filterButton} aria-label="필터" onClick={handleOpenFilter}>
           <CommonIcon name="filter" size={24} className={styles.filterIcon} />
           <span>필터</span>
         </button>
@@ -387,6 +567,228 @@ export default function MapScreen() {
         </Button>
       </div>
 
+      {isMenuOpen ? (
+        <div className={styles.menuOverlay} onClick={() => setIsMenuOpen(false)} role="presentation">
+          <div className={styles.menuPanel} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+            <div className={styles.menuHeader}>
+              <button
+                type="button"
+                className={styles.menuCloseButton}
+                aria-label="메뉴 닫기"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <CommonIcon name="crossclose" size={22} />
+              </button>
+            </div>
+
+            {isLoggedIn ? (
+              <div className={styles.menuContent}>
+                <button type="button" className={styles.menuAction}>
+                  <span className={styles.menuActionIcon}>
+                    <CommonIcon name="mypage2" size={26} />
+                  </span>
+                  <span>마이페이지</span>
+                </button>
+
+                <div className={styles.menuDivider} />
+
+                <button type="button" className={styles.menuAction} onClick={handleLogout}>
+                  <span className={styles.menuActionIcon}>
+                    <CommonIcon name="exit" size={24} />
+                  </span>
+                  <span>로그아웃</span>
+                </button>
+
+                <button type="button" className={styles.menuAction}>
+                  <span className={styles.menuActionIcon}>
+                    <CommonIcon name="ban" size={24} />
+                  </span>
+                  <span>회원탈퇴</span>
+                </button>
+              </div>
+            ) : (
+              <div className={styles.menuGuestContent}>
+                <button type="button" className={styles.menuGuestPrimary} onClick={handleOpenLogin}>
+                  로그인
+                </button>
+                <button type="button" className={styles.menuGuestSecondary} onClick={handleOpenSignUp}>
+                  회원가입
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      <Modal open={isLoginOpen} onClose={handleCloseLogin} closeOnOverlayClick className={styles.loginModal}>
+        <div className={styles.loginBody}>
+          <h2 className={styles.loginTitle}>로그인 하기</h2>
+
+          <div className={styles.signUpField}>
+            <label className={styles.signUpLabel}>이메일</label>
+            <input
+              className={styles.signUpInput}
+              type="email"
+              value={loginEmail}
+              onChange={(event) => setLoginEmail(event.target.value)}
+              placeholder="example@email.com"
+            />
+          </div>
+
+          <div className={styles.signUpField}>
+            <label className={styles.signUpLabel}>비밀번호</label>
+            <div className={styles.passwordRow}>
+              <input
+                className={styles.signUpInput}
+                type={showLoginPassword ? 'text' : 'password'}
+                value={loginPassword}
+                onChange={(event) => setLoginPassword(event.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.passwordToggleButton}
+                aria-label="비밀번호 보기"
+                onClick={() => setShowLoginPassword((prev) => !prev)}
+              >
+                <CommonIcon name={showLoginPassword ? 'passwordopen' : 'passwordhide'} size={16} />
+              </button>
+            </div>
+          </div>
+
+          {loginError ? <p className={styles.signUpErrorText}>{loginError}</p> : null}
+
+          <button type="button" className={styles.signUpSubmitButton} onClick={handleSubmitLogin} disabled={isLoggingIn}>
+            {isLoggingIn ? '로그인 중...' : '로그인'}
+          </button>
+        </div>
+      </Modal>
+
+      <Modal open={isSignUpOpen} onClose={handleCloseSignUp} closeOnOverlayClick className={styles.signUpModal}>
+        <div className={styles.signUpBody}>
+          <h2 className={styles.signUpTitle}>계정 생성하기</h2>
+
+          <div className={styles.signUpField}>
+            <label className={styles.signUpLabel}>이메일</label>
+            <div className={styles.emailRow}>
+              <input
+                className={styles.signUpInput}
+                type="email"
+                value={signUpEmail}
+                onChange={(event) => {
+                  setSignUpEmail(event.target.value);
+                  setIsEmailVerified(false);
+                }}
+                placeholder="example@email.com"
+              />
+              <button type="button" className={styles.emailCheckButton} onClick={handleSendVerification} disabled={isSendingCode}>
+                {isSendingCode ? '전송 중...' : '인증'}
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.signUpField}>
+            <label className={styles.signUpLabel}>인증 코드</label>
+            <div className={styles.emailRow}>
+              <input
+                className={styles.signUpInput}
+                type="text"
+                value={signUpCode}
+                onChange={(event) => {
+                  setSignUpCode(event.target.value);
+                  setIsEmailVerified(false);
+                }}
+                placeholder="6자리 코드를 입력해 주세요"
+              />
+              <button type="button" className={styles.emailCheckButton} onClick={handleVerifyCode} disabled={isVerifyingCode}>
+                {isVerifyingCode ? '확인 중...' : '확인'}
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.signUpField}>
+            <label className={styles.signUpLabel}>비밀번호</label>
+            <div className={styles.passwordRow}>
+              <input
+                className={`${styles.signUpInput} ${styles.signUpInputError}`}
+                type={showSignUpPassword ? 'text' : 'password'}
+                value={signUpPassword}
+                onChange={(event) => setSignUpPassword(event.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.passwordToggleButton}
+                aria-label="비밀번호 보기"
+                onClick={() => setShowSignUpPassword((prev) => !prev)}
+              >
+                <CommonIcon name={showSignUpPassword ? 'passwordopen' : 'passwordhide'} size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.signUpField}>
+            <label className={styles.signUpLabel}>닉네임</label>
+            <input
+              className={styles.signUpInput}
+              type="text"
+              value={signUpNickname}
+              onChange={(event) => setSignUpNickname(event.target.value)}
+              placeholder="닉네임"
+            />
+          </div>
+
+          <div className={styles.signUpSelectRow}>
+            <div className={styles.signUpField}>
+              <label className={styles.signUpLabel}>성별</label>
+              <select className={styles.signUpSelect} value={signUpGender} onChange={(event) => setSignUpGender(event.target.value)}>
+                <option value="">선택</option>
+                <option value="남성">남성</option>
+                <option value="여성">여성</option>
+                <option value="선택안함">선택안함</option>
+              </select>
+            </div>
+
+            <div className={styles.signUpField}>
+              <label className={styles.signUpLabel}>나이대</label>
+              <select className={styles.signUpSelect} value={signUpAge} onChange={(event) => setSignUpAge(event.target.value)}>
+                <option value="">선택</option>
+                <option value="10대 이하">10대 이하</option>
+                <option value="10대">10대</option>
+                <option value="20대">20대</option>
+                <option value="30대">30대</option>
+                <option value="40대">40대</option>
+                <option value="50대 이상">50대 이상</option>
+                <option value="선택안함">선택안함</option>
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.signUpField}>
+            <label className={styles.signUpLabel}>혼밥 레벨</label>
+            <select className={styles.signUpSelect} value={signUpEatingLevel} onChange={(event) => setSignUpEatingLevel(event.target.value)}>
+              <option value="">선택</option>
+              <option value="1레벨">1레벨</option>
+              <option value="2레벨">2레벨</option>
+              <option value="3레벨">3레벨</option>
+              <option value="4레벨">4레벨</option>
+            </select>
+          </div>
+
+          <div className={styles.signUpMetaRow}>
+            <span className={styles.signUpMetaMuted}>완료 확인</span>
+            <button type="button" className={styles.signUpTermsButton}>
+              개인정보 동의
+            </button>
+          </div>
+
+          {signUpError ? <p className={styles.signUpErrorText}>{signUpError}</p> : null}
+          {signUpMessage ? <p className={styles.signUpSuccessText}>{signUpMessage}</p> : null}
+
+          <button type="button" className={styles.signUpSubmitButton} onClick={handleSubmitSignUp} disabled={isSigningUp}>
+            {isSigningUp ? '가입 중...' : '회원가입'}
+          </button>
+        </div>
+      </Modal>
+
       <Modal
         open={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
@@ -394,12 +796,7 @@ export default function MapScreen() {
         closeOnOverlayClick
         className={styles.filterModal}
         headerLeft={
-          <button
-            type="button"
-            className={styles.filterBackButton}
-            aria-label="필터 닫기"
-            onClick={() => setIsFilterOpen(false)}
-          >
+          <button type="button" className={styles.filterBackButton} aria-label="필터 닫기" onClick={() => setIsFilterOpen(false)}>
             <CommonIcon name="leftdir" size={28} />
           </button>
         }

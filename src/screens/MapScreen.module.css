@@ -38,6 +38,104 @@
   padding: 0;
 }
 
+.menuOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.menuPanel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 188px;
+  min-height: 310px;
+  padding: 20px 16px 22px;
+  background: #e9e9e9;
+  box-shadow: 8px 0 20px rgba(0, 0, 0, 0.12);
+}
+
+.menuHeader {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.menuCloseButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #6fbf3a;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.menuContent {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.menuGuestContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 48px;
+}
+
+.menuAction {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0 8px;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #6fbf3a;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menuActionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menuDivider {
+  height: 1px;
+  margin: 36px 0 14px;
+  background: rgba(111, 191, 58, 0.32);
+}
+
+.menuGuestPrimary,
+.menuGuestSecondary {
+  appearance: none;
+  border: 0;
+  min-height: 46px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.menuGuestPrimary {
+  background: #6fbf3a;
+  color: #ffffff;
+}
+
+.menuGuestSecondary {
+  background: #ffffff;
+  color: #6fbf3a;
+}
+
 .filterButton {
   appearance: none;
   border: 0;
@@ -237,6 +335,194 @@
   background: #efefef;
 }
 
+.signUpModal {
+  width: min(360px, calc(100vw - 28px));
+  padding: 26px 26px 30px;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.loginModal {
+  width: min(360px, calc(100vw - 28px));
+  padding: 28px 26px 30px;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.signUpBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.loginBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signUpTitle {
+  margin: 4px 0 8px;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  color: #161616;
+}
+
+.loginTitle {
+  margin: 10px 0 18px;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  color: #161616;
+}
+
+.signUpField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.signUpLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.42);
+}
+
+.signUpInput,
+.signUpSelect {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #ffffff;
+  font-size: 12px;
+  color: #202020;
+  box-sizing: border-box;
+}
+
+.signUpInput::placeholder {
+  color: rgba(0, 0, 0, 0.34);
+}
+
+.signUpInputError {
+  border-color: #ef6d6d;
+}
+
+.emailRow,
+.passwordRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emailRow .signUpInput,
+.passwordRow .signUpInput {
+  flex: 1;
+}
+
+.emailCheckButton {
+  appearance: none;
+  border: 0;
+  width: 50px;
+  height: 28px;
+  border-radius: 8px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.emailCheckButton:disabled,
+.signUpSubmitButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.passwordToggleButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #8a8a8a;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: absolute;
+  right: 8px;
+}
+
+.signUpSelectRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.signUpMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.signUpMetaMuted,
+.signUpTermsButton {
+  font-size: 10px;
+}
+
+.signUpMetaMuted {
+  color: rgba(0, 0, 0, 0.28);
+}
+
+.signUpTermsButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #151515;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.signUpSubmitButton {
+  appearance: none;
+  border: 0;
+  margin-top: 10px;
+  height: 42px;
+  border-radius: 8px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.signUpErrorText,
+.signUpSuccessText {
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.signUpErrorText {
+  color: #df5b5b;
+}
+
+.signUpSuccessText {
+  color: #58a42b;
+}
+
 .filterBackButton {
   appearance: none;
   border: 0;
@@ -401,6 +687,11 @@
     font-size: 21px;
   }
 
+  .menuPanel {
+    width: min(220px, 72vw);
+    min-height: 280px;
+  }
+
   .rightPanel {
     top: auto;
     left: 14px;
@@ -442,6 +733,16 @@
     padding: 22px 16px 24px;
   }
 
+  .signUpModal {
+    width: calc(100vw - 20px);
+    padding: 22px 18px 24px;
+  }
+
+  .loginModal {
+    width: calc(100vw - 20px);
+    padding: 24px 18px;
+  }
+
   .filterSection {
     padding: 22px 18px;
   }
@@ -458,5 +759,18 @@
   .filterActions {
     padding: 0;
     gap: 14px;
+  }
+
+  .signUpTitle {
+    font-size: 24px;
+  }
+
+  .loginTitle {
+    font-size: 24px;
+  }
+
+  .signUpSelectRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
