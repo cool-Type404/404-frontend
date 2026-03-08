@@ -3,6 +3,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background: #f7f3ea;
 }
 
 .mapLayer {
@@ -10,132 +11,257 @@
   inset: 0;
 }
 
-/* ✅ 헤더 */
-.header {
+.mapDimmer {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  z-index: 20;
-
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 45%, rgba(255, 255, 255, 0.24) 100%);
+  pointer-events: none;
 }
 
-.title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-  color: #111827;
-}
-
-/* 헤더 아래로 UI 내리기 */
 .topLeft {
   position: absolute;
-  top: 84px;
-  left: 20px;
+  top: 38px;
+  left: 42px;
   z-index: 10;
 }
 
 .topCenter {
   position: absolute;
-  top: 84px;
+  top: 34px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
 }
 
-.rightPanel {
-  position: absolute;
-  top: 84px;
-  right: 20px;
-  width: min(440px, calc(100vw - 40px));
+.menuButton {
+  padding: 0;
+}
 
-  /* ✅ 패널 높이를 키워서 리스트가 길게 보이게 */
-  height: calc(100% - 104px); /* top 84 + bottom 여백 20 */
+.menuOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.menuPanel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 188px;
+  min-height: 310px;
+  padding: 20px 16px 22px;
+  background: #e9e9e9;
+  box-shadow: 8px 0 20px rgba(0, 0, 0, 0.12);
+}
+
+.menuHeader {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.menuCloseButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #6fbf3a;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.menuContent {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding-top: 4px;
+}
+
+.menuGuestContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 48px;
+}
+
+.menuAction {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0 8px;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #6fbf3a;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menuActionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menuDivider {
+  height: 1px;
+  margin: 36px 0 14px;
+  background: rgba(111, 191, 58, 0.32);
+}
+
+.menuGuestPrimary,
+.menuGuestSecondary {
+  appearance: none;
+  border: 0;
+  min-height: 46px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.menuGuestPrimary {
+  background: #6fbf3a;
+  color: #ffffff;
+}
+
+.menuGuestSecondary {
+  background: #ffffff;
+  color: #6fbf3a;
+}
+
+.filterButton {
+  appearance: none;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 72px;
+  padding: 0 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #1e1e1e;
+  font-size: 24px;
+  font-weight: 800;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}
+
+.filterIcon {
+  color: #6fbf3a;
+}
+
+.rightPanel {
+  position: absolute;
+  top: 38px;
+  right: 34px;
+  bottom: 28px;
+  width: min(386px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   z-index: 10;
 }
 
 .searchWrap {
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.15));
+  filter: drop-shadow(0 8px 16px rgba(71, 93, 40, 0.16));
 }
 
-/* ✅ 리스트가 남는 높이를 다 차지 + 스크롤 */
+.searchInput {
+  padding-bottom: 0;
+}
+
 .list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  flex: 1;
+  gap: 18px;
   min-height: 0;
   overflow: auto;
-  padding-right: 4px;
+  padding: 2px 8px 10px 0;
 }
 
-/* ✅ 카드 세로 크게 */
-.card {
-  display: flex;
-  align-items: stretch; /* ✅ 기존 center였다면 stretch로 변경 */
-  justify-content: space-between;
-  gap: 14px;
+.list::-webkit-scrollbar {
+  width: 8px;
+}
 
-  background: #fff;
-  transition: background-color 0.15s ease;
-  border-radius: 16px;
-  padding: 22px 18px;
-  min-height: 70px;
-  box-shadow: 2px 2px 4px 2px rgba(0, 0, 0, 0.12);
+.list::-webkit-scrollbar-thumb {
+  background: rgba(111, 191, 58, 0.28);
+  border-radius: 999px;
+}
+
+.feedbackCard {
+  padding: 18px 22px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #587424;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.card {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 26px 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
 }
 
 .card:hover {
-  background-color: #f0fae8;
-}
-
-.card:active {
-  background-color: #d6f0c0;
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.16);
 }
 
 .cardSelected {
-  background-color: #d6f0c0;
+  background: rgba(247, 252, 239, 0.98);
 }
 
-.cardLeft {
-  display: flex;
-  align-items: center; /* 아이콘/텍스트 묶음은 세로 가운데 */
-  gap: 12px;
-  min-width: 0;
-
-  height: 100%; /* ✅ 이게 핵심 */
-}
-
-.catIconBox {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+.cardTop {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  /* 살짝 배경 주면 더 보기 좋음 (원치 않으면 주석) */
-  background: rgba(17, 24, 39, 0.04);
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.storeInfo {
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* ✅ 세로 가운데 */
-  gap: 6px;
-  min-width: 0;
+.categoryChip,
+.statusChip {
+  box-shadow: none;
+  font-weight: 700;
+  padding: 8px 18px;
+  font-size: 14px;
+}
 
-  height: 100%; /* ✅ 이게 핵심 */
+.categoryChip {
+  color: #5d781f;
+  background: #cfe56d;
+}
+
+.statusChip {
+  min-width: 64px;
+}
+
+.cardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
 }
 
 .storeNameRow {
@@ -143,69 +269,56 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  line-height: 1.2;
+}
+
+.forkIcon {
+  color: #6fbf3a;
+  flex-shrink: 0;
 }
 
 .storeName {
+  font-size: 22px;
   font-weight: 800;
-  font-size: 18px;
-  color: #111827;
+  line-height: 1.2;
+  color: #62b32f;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-
-  /* ✅ 추가 */
-  line-height: 1.2;
-}
-
-.storeMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.metaText {
-  font-size: 13px;
-  color: rgba(17, 24, 39, 0.62);
-
-  /* ✅ 추가 */
-  line-height: 1.2;
-}
-
-.cardRight {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
 }
 
 .rating {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: rgba(17, 24, 39, 0.6);
+  gap: 4px;
+  color: #9b9b9b;
+  flex-shrink: 0;
 }
 
 .ratingLabel {
-  font-size: 12px;
+  font-size: 14px;
 }
 
-.star {
-  display: inline-flex;
-  align-items: center;
+.starIcon {
+  color: #f5c240;
 }
 
 .ratingValue {
-  font-weight: 800;
-  color: #111827;
+  font-size: 18px;
+  font-weight: 700;
+  color: #323232;
 }
 
 .bottomLeft {
   position: absolute;
-  left: 20px;
-  bottom: 20px;
+  left: 36px;
+  bottom: 28px;
   z-index: 10;
+}
+
+.recommendButton {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 0 24px;
 }
 
 .inlineIcon {
@@ -214,11 +327,450 @@
   margin-right: 8px;
 }
 
-/* ✅ 좁은 화면 대응 */
-@media (max-width: 860px) {
+.filterModal {
+  width: min(560px, calc(100vw - 28px));
+  max-height: min(840px, calc(100vh - 28px));
+  padding: 28px 26px 34px;
+  border-radius: 28px;
+  background: #efefef;
+}
+
+.signUpModal {
+  width: min(360px, calc(100vw - 28px));
+  padding: 26px 26px 30px;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.loginModal {
+  width: min(360px, calc(100vw - 28px));
+  padding: 28px 26px 30px;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.signUpBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.loginBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signUpTitle {
+  margin: 4px 0 8px;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  color: #161616;
+}
+
+.loginTitle {
+  margin: 10px 0 18px;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  color: #161616;
+}
+
+.signUpField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.signUpLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.42);
+}
+
+.signUpInput,
+.signUpSelect {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #ffffff;
+  font-size: 12px;
+  color: #202020;
+  box-sizing: border-box;
+}
+
+.signUpInput::placeholder {
+  color: rgba(0, 0, 0, 0.34);
+}
+
+.signUpInputError {
+  border-color: #ef6d6d;
+}
+
+.emailRow,
+.passwordRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emailRow .signUpInput,
+.passwordRow .signUpInput {
+  flex: 1;
+}
+
+.emailCheckButton {
+  appearance: none;
+  border: 0;
+  width: 50px;
+  height: 28px;
+  border-radius: 8px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.emailCheckButton:disabled,
+.signUpSubmitButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.passwordToggleButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #8a8a8a;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: absolute;
+  right: 8px;
+}
+
+.signUpSelectRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.signUpMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.signUpMetaMuted,
+.signUpTermsButton {
+  font-size: 10px;
+}
+
+.signUpMetaMuted {
+  color: rgba(0, 0, 0, 0.28);
+}
+
+.signUpTermsButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #151515;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.signUpSubmitButton {
+  appearance: none;
+  border: 0;
+  margin-top: 10px;
+  height: 42px;
+  border-radius: 8px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.signUpErrorText,
+.signUpSuccessText {
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.signUpErrorText {
+  color: #df5b5b;
+}
+
+.signUpSuccessText {
+  color: #58a42b;
+}
+
+.filterBackButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #111111;
+}
+
+.filterModalBody {
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.filterSection {
+  padding: 28px 34px;
+  border-radius: 18px;
+  background: #e5ecdd;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.14);
+}
+
+.filterSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.filterSectionTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #171717;
+}
+
+.filterBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  height: 26px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 22px;
+}
+
+.filterPill {
+  appearance: none;
+  border: 0;
+  min-height: 48px;
+  padding: 0 14px 0 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: #ffffff;
+  color: #2a2a2a;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
+}
+
+.filterPillActive {
+  background: #6fbf3a;
+  color: #ffffff;
+}
+
+.filterRadio {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(65, 65, 65, 0.45);
+  background: #ffffff;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.filterPillActive .filterRadio {
+  border-color: #4f7f1e;
+  background: #f5efaa;
+}
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.categoryPill {
+  appearance: none;
+  border: 0;
+  min-height: 40px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #212121;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+}
+
+.categoryPillActive {
+  background: #6fbf3a;
+  color: #ffffff;
+}
+
+.filterActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  padding: 0 22px;
+}
+
+.resetButton,
+.applyButton {
+  appearance: none;
+  border: 0;
+  height: 58px;
+  border-radius: 24px;
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+}
+
+.resetButton {
+  background: #ffffff;
+  color: #6fbf3a;
+}
+
+.applyButton {
+  background: #6fbf3a;
+  color: #ffffff;
+}
+
+@media (max-width: 980px) {
+  .topLeft {
+    top: 18px;
+    left: 18px;
+  }
+
+  .topCenter {
+    top: 18px;
+  }
+
+  .filterButton {
+    height: 60px;
+    padding: 0 22px;
+    font-size: 21px;
+  }
+
+  .menuPanel {
+    width: min(220px, 72vw);
+    min-height: 280px;
+  }
+
   .rightPanel {
-    left: 20px;
-    right: 20px;
+    top: auto;
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
     width: auto;
+    max-height: 56vh;
+    padding: 14px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+  }
+
+  .searchWrap {
+    filter: none;
+  }
+
+  .card {
+    padding: 16px 18px;
+    border-radius: 20px;
+  }
+
+  .cardBottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .storeName {
+    font-size: 19px;
+  }
+
+  .bottomLeft {
+    left: 14px;
+    bottom: calc(56vh + 28px);
+  }
+
+  .filterModal {
+    width: calc(100vw - 20px);
+    padding: 22px 16px 24px;
+  }
+
+  .signUpModal {
+    width: calc(100vw - 20px);
+    padding: 22px 18px 24px;
+  }
+
+  .loginModal {
+    width: calc(100vw - 20px);
+    padding: 24px 18px;
+  }
+
+  .filterSection {
+    padding: 22px 18px;
+  }
+
+  .filterGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .categoryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filterActions {
+    padding: 0;
+    gap: 14px;
+  }
+
+  .signUpTitle {
+    font-size: 24px;
+  }
+
+  .loginTitle {
+    font-size: 24px;
+  }
+
+  .signUpSelectRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
