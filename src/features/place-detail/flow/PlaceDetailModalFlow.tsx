@@ -31,6 +31,8 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
   const [view, setView] = useState<View>('detail');
   const [reviewsState, setReviewsState] = useState<Review[]>([]);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const currentNickname = window.localStorage.getItem('userNickname') ?? '';
+  const isAuthenticated = Boolean(window.localStorage.getItem('accessToken'));
 
   const storeIdNum = storeId != null && !Number.isNaN(Number(storeId)) ? Number(storeId) : null;
 
@@ -113,44 +115,61 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
       const converted: Review[] = reviewsData.map((r) => ({
         review_id: r.reviewId,
         storeInfoPK: storeIdNum ?? 0,
-        user_id: r.userId,
+        user_id: r.userId ?? r.reviewId,
         review_contents: r.reviewContents,
         review_rating: r.reviewRating,
         created_at: r.createdAt,
-        user_nickname: r.userNickname,
-        like_count: r.likeCount,
-        liked_by_me: r.isLiked,
-        is_mine: r.userId === CURRENT_USER_ID,
-        hashtags: r.hashtags.map((h) => ({
-          hashtag_id: h.hashtagId,
+        user_nickname: r.userNickname ?? r.reviewWriter ?? '익명',
+        like_count: r.likeCount ?? 0,
+        liked_by_me: r.isLiked ?? false,
+        is_mine:
+          (r.userId != null && r.userId === CURRENT_USER_ID) ||
+          (currentNickname.length > 0 && (r.userNickname ?? r.reviewWriter ?? '') === currentNickname),
+        hashtags: (r.hashtags ?? []).map((h, index) => ({
+          hashtag_id: typeof h === 'string' ? `${r.reviewId}-${index}` : h.hashtagId,
           review_id: r.reviewId,
-          hashtag_name: h.hashtagName,
+          hashtag_name: typeof h === 'string' ? h : h.hashtagName,
         })),
-        review_images: r.reviewImages.map((img) => ({
-          review_img_id: img.reviewImgId,
+        review_images: (r.reviewImages ?? []).map((img, index) => ({
+          review_img_id: typeof img === 'string' ? `${r.reviewId}-img-${index}` : img.reviewImgId,
           review_id: r.reviewId,
-          review_img_path: null,
+          review_img_path: typeof img === 'string' ? img : null,
         })),
       }));
       setReviewsState(converted);
     }
-  }, [open, reviewsData, storeIdNum]);
+  }, [currentNickname, open, reviewsData, storeIdNum]);
 
   // 핸들러
   const handleMoreReviews = useCallback(() => setView('reviews'), []);
   const handleBack = useCallback(() => setView('detail'), []);
-  const handleWriteReview = useCallback(() => setView('write'), []);
+  const handleWriteReview = useCallback(() => {
+    if (!isAuthenticated) {
+      window.alert('로그인 후 리뷰를 작성할 수 있습니다.');
+      return;
+    }
+
+    setView('write');
+  }, [isAuthenticated]);
 
   const handleBookmarkToggle = useCallback(
     (isCurrentlyBookmarked: boolean) => {
-      if (isCurrentlyBookmarked) {
-        removeBookmark.mutate();
-      } else {
-        addBookmark.mutate();
+      if (!isAuthenticated) {
+        window.alert('로그인 후 북마크를 사용할 수 있습니다.');
+        return;
       }
-      setIsBookmarked((prev) => !prev);
+
+      if (isCurrentlyBookmarked) {
+        removeBookmark.mutate(undefined, {
+          onSuccess: () => setIsBookmarked(false),
+        });
+      } else {
+        addBookmark.mutate(undefined, {
+          onSuccess: () => setIsBookmarked(true),
+        });
+      }
     },
-    [addBookmark, removeBookmark],
+    [addBookmark, isAuthenticated, removeBookmark],
   );
 
   const handleToggleLike = useCallback(
@@ -234,6 +253,8 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
         onBack={handleBack}
         placeId={place.storeInfoPK}
         placeName={place.store_name}
+        isSubmitting={writeReview.isPending}
+        submitError={writeReview.error instanceof Error ? writeReview.error.message : ''}
         onSubmitReview={handleSubmitReview}
       />
     );

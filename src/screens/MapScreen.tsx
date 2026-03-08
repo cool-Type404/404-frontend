@@ -8,12 +8,15 @@ import Input from '../components/Input/Input';
 import Chip from '../components/Chip/Chip';
 import Modal from '../components/Modal/Modal';
 import { CommonIcon } from '../components/CommonIcon/CommonIcon';
+import { FoodCategoryIcon } from '@/components/FoodCategoryIcon';
 import { login, logout, sendVerificationEmail, signUp, verifyEmailCode } from '@/features/auth/api/auth.api';
 import { useRestaurantList } from '@/features/main-map/hooks/useRestaurantList';
 import { useStoreLocations } from '@/features/main-map/hooks/useStoreLocations';
 import { useStoreSearch } from '@/features/main-map/hooks/useStoreSearch';
 import { useFilteredStores } from '@/features/main-map/hooks/useFilteredStores';
+import MyPageModal from '@/features/mypage/components/MyPageModal/MyPageModal';
 import { getStoreDetail, getStoreReviews } from '@/features/place-detail/api/placeDetail.api';
+import PlaceDetailModalFlow from '@/features/place-detail/flow/PlaceDetailModalFlow';
 
 import styles from './MapScreen.module.css';
 
@@ -33,14 +36,7 @@ type CategoryOption = {
   value: StoreCategory;
 };
 
-const categoryLabelMap: Record<StoreCategory, string> = {
-  KOREAN: '한식',
-  JAPANESE: '일식',
-  CHINESE: '중식',
-  WESTERN: '양식',
-  SNACK: '분식',
-  ASIAN: '아시안',
-};
+type FoodCategory = 'korean' | 'japanese' | 'western' | 'chinese' | 'asian' | 'cafe' | 'bunsik' | 'etc';
 
 const categoryOptions: CategoryOption[] = [
   { label: '한식', value: 'KOREAN' },
@@ -80,13 +76,51 @@ const toStoreSummary = (store: {
   rating: store.storeRating,
 });
 
+const toFoodCategory = (storeType: string): FoodCategory => {
+  const map: Record<string, FoodCategory> = {
+    KOREAN: 'korean',
+    JAPANESE: 'japanese',
+    WESTERN: 'western',
+    CHINESE: 'chinese',
+    ASIAN: 'asian',
+    CAFE: 'cafe',
+    BUNSIK: 'bunsik',
+    SNACK: 'bunsik',
+  };
+
+  return map[storeType] ?? 'etc';
+};
+
+const foodCategoryLabel = (category: FoodCategory) => {
+  switch (category) {
+    case 'korean':
+      return '한식';
+    case 'japanese':
+      return '일식';
+    case 'western':
+      return '양식';
+    case 'chinese':
+      return '중식';
+    case 'asian':
+      return '아시안';
+    case 'cafe':
+      return '카페';
+    case 'bunsik':
+      return '분식';
+    default:
+      return '기타';
+  }
+};
+
 export default function MapScreen() {
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
+  const [detailStoreId, setDetailStoreId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isMyPageOpen, setIsMyPageOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [appliedSort, setAppliedSort] = useState<SortKey>('recommend');
   const [draftSort, setDraftSort] = useState<SortKey>('recommend');
@@ -304,6 +338,11 @@ export default function MapScreen() {
     setIsLoginOpen(true);
   };
 
+  const handleOpenMyPage = () => {
+    setIsMenuOpen(false);
+    setIsMyPageOpen(true);
+  };
+
   const handleCloseLogin = () => {
     setIsLoginOpen(false);
     setShowLoginPassword(false);
@@ -461,6 +500,7 @@ export default function MapScreen() {
       window.localStorage.removeItem('refreshToken');
       window.localStorage.removeItem('loginEmail');
       setIsLoggedIn(false);
+      setIsMyPageOpen(false);
       setIsMenuOpen(false);
     }
   };
@@ -471,33 +511,39 @@ export default function MapScreen() {
     (appliedSort === 'eatingLevel' || appliedSort === 'reviews') &&
     sortMetaQueries.some((query) => query.isLoading || query.isFetching);
   const hasError = isStoreListError || isLocationsError || isSearchError || isFilteredStoresError;
+  const handleMarkerClick = (storeId: number) => {
+    setSelectedStoreId(storeId);
+    setDetailStoreId(storeId);
+  };
 
   return (
     <div className={styles.root}>
       <div className={styles.mapLayer}>
-        <KakaoMap markers={mapMarkers} onMarkerClick={setSelectedStoreId} />
+        <KakaoMap markers={mapMarkers} onMarkerClick={handleMarkerClick} />
         <div className={styles.mapDimmer} />
       </div>
 
       <div className={styles.topLeft}>
         <Button
           variant="primary"
-          width={74}
-          height={74}
-          radius={24}
+          width={56}
+          height={56}
+          radius={16}
           aria-label="메뉴 열기"
           className={styles.menuButton}
           onClick={() => setIsMenuOpen(true)}
         >
-          <CommonIcon name="hamburger" size={40} variant="inherit" />
+          <CommonIcon name="hamburger" size={28} variant="inherit" />
         </Button>
       </div>
 
       <div className={styles.topCenter}>
-        <button type="button" className={styles.filterButton} aria-label="필터" onClick={handleOpenFilter}>
-          <CommonIcon name="filter" size={24} className={styles.filterIcon} />
-          <span>필터</span>
-        </button>
+        <Button variant="third" height={44} radius={16} className={styles.filterButton} aria-label="필터" onClick={handleOpenFilter}>
+          <span className={styles.inlineIcon}>
+            <CommonIcon name="filter" size={20} className={styles.filterIcon} />
+          </span>
+          필터
+        </Button>
       </div>
 
       <aside className={styles.rightPanel}>
@@ -505,7 +551,7 @@ export default function MapScreen() {
           <Input
             variant="search"
             placeholder="지금, 먹고 싶은 음식은?"
-            leftIcon={<CommonIcon name="search" size={26} />}
+            leftIcon={<CommonIcon name="search" size={22} />}
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             containerClassName={styles.searchInput}
@@ -528,26 +574,36 @@ export default function MapScreen() {
                   key={store.id}
                   type="button"
                   className={`${styles.card} ${isSelected ? styles.cardSelected : ''}`}
-                  onClick={() => setSelectedStoreId(store.id)}
+                  onClick={() => {
+                    setSelectedStoreId(store.id);
+                    setDetailStoreId(store.id);
+                  }}
                 >
-                  <div className={styles.cardTop}>
-                    <Chip variant={store.isOpen ? 'open' : 'closed'} size="sm" className={styles.categoryChip}>
-                      {categoryLabelMap[store.category] ?? store.category}
-                    </Chip>
-                    <Chip variant={store.isOpen ? 'open' : 'closed'} size="sm" className={styles.statusChip}>
-                      {store.isOpen ? '영업중' : '영업전'}
-                    </Chip>
+                  <div className={styles.cardLeft}>
+                    <div className={styles.catIconBox}>
+                      <FoodCategoryIcon category={toFoodCategory(store.category)} size={26} />
+                    </div>
+                    <div className={styles.storeInfo}>
+                      <div className={styles.storeNameRow}>
+                        <CommonIcon name="forkknife" size={18} className={styles.forkIcon} />
+                        <span className={styles.storeName}>{store.name}</span>
+                      </div>
+                      <div className={styles.storeMeta}>
+                        <span className={styles.metaText}>{foodCategoryLabel(toFoodCategory(store.category))}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className={styles.cardBottom}>
-                    <div className={styles.storeNameRow}>
-                      <CommonIcon name="forkknife" size={30} className={styles.forkIcon} />
-                      <span className={styles.storeName}>{store.name}</span>
-                    </div>
+                  <div className={styles.cardRight}>
+                    <Chip variant={store.isOpen ? 'open' : 'closed'} size="sm">
+                      {store.isOpen ? '영업중' : '영업전'}
+                    </Chip>
 
                     <div className={styles.rating}>
                       <span className={styles.ratingLabel}>평점</span>
-                      <CommonIcon name="starline" size={18} className={styles.starIcon} />
+                      <span className={styles.star}>
+                        <CommonIcon name="starfilled" size={14} />
+                      </span>
                       <span className={styles.ratingValue}>{store.rating.toFixed(1)}</span>
                     </div>
                   </div>
@@ -559,13 +615,21 @@ export default function MapScreen() {
       </aside>
 
       <div className={styles.bottomLeft}>
-        <Button variant="primary" height={64} radius={18} className={styles.recommendButton}>
+        <Button variant="primary" height={48} radius={9999} className={styles.recommendButton}>
           <span className={styles.inlineIcon}>
-            <CommonIcon name="plus" size={18} />
+            <CommonIcon name="plus" size={16} />
           </span>
           장소 추천하기
         </Button>
       </div>
+
+      <PlaceDetailModalFlow
+        open={detailStoreId !== null}
+        onClose={() => setDetailStoreId(null)}
+        storeId={detailStoreId}
+      />
+
+      <MyPageModal open={isMyPageOpen} onClose={() => setIsMyPageOpen(false)} />
 
       {isMenuOpen ? (
         <div className={styles.menuOverlay} onClick={() => setIsMenuOpen(false)} role="presentation">
@@ -583,7 +647,7 @@ export default function MapScreen() {
 
             {isLoggedIn ? (
               <div className={styles.menuContent}>
-                <button type="button" className={styles.menuAction}>
+                <button type="button" className={styles.menuAction} onClick={handleOpenMyPage}>
                   <span className={styles.menuActionIcon}>
                     <CommonIcon name="mypage2" size={26} />
                   </span>

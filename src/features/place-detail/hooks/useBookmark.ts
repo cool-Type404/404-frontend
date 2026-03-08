@@ -6,6 +6,7 @@ export const useBookmark = (storeId: number) => {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['placeDetail', storeId] });
+    window.dispatchEvent(new Event('mypage:refresh'));
   };
 
   const addBookmark = useMutation({
