@@ -1,0 +1,91 @@
+.section {
+  padding: 14px 0;
+}
+
+.sectionHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 900;
+  color: #111827;
+  margin: 0;
+}
+
+.menuList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+
+  padding: 16px 0;
+}
+
+.menuItem:last-child {
+  border-bottom: 0;
+}
+
+.menuImageBox {
+  width: 120px;
+  height: 90px;
+  border-radius: 16px;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menuImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.menuImagePlaceholder {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-align: center;
+  padding: 8px;
+}
+
+.menuContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.menuNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.menuName {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-primary, #000);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menuPrice {
+  font-size: 15px;
+  color: #111827;
+}
