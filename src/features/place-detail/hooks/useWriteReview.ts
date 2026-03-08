@@ -9,6 +9,7 @@ export const useWriteReview = (storeId: number) => {
     mutationFn: (body: WriteReviewRequest) => postReview(storeId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['placeReviews', storeId] });
+      window.dispatchEvent(new Event('mypage:refresh'));
     },
   });
 };

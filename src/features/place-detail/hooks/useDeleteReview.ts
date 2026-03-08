@@ -8,6 +8,7 @@ export const useDeleteReview = (storeId: number) => {
     mutationFn: (reviewId: number) => deleteReview(reviewId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['placeReviews', storeId] });
+      window.dispatchEvent(new Event('mypage:refresh'));
     },
   });
 };

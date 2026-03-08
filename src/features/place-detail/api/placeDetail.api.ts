@@ -40,15 +40,16 @@ export interface OpeningHour {
 
 export interface Review {
   reviewId: number;
-  userId: number;
-  userNickname: string;
+  userId?: number;
+  userNickname?: string;
+  reviewWriter?: string;
   reviewContents: string;
   reviewRating: number;
   createdAt: string;
-  hashtags: Hashtag[];
-  reviewImages: ReviewImage[];
-  likeCount: number;
-  isLiked: boolean;
+  hashtags?: Array<Hashtag | string>;
+  reviewImages?: Array<ReviewImage | string>;
+  likeCount?: number;
+  isLiked?: boolean;
 }
 
 export interface Hashtag {
@@ -66,6 +67,8 @@ export interface WriteReviewRequest {
   hashtags: string[];
   images?: File[];
 }
+
+const normalizeHashtag = (value: string) => value.replace(/^#/, '').trim();
 
 export interface BookmarkStore {
   storeId: number;
@@ -125,9 +128,16 @@ export const getStoreReviews = async (storeId: number): Promise<Review[]> => {
 export const postReview = async (storeId: number, body: WriteReviewRequest): Promise<void> => {
   try {
     const formData = new FormData();
-    formData.append('reviewContents', body.reviewContents);
-    formData.append('reviewRating', String(body.reviewRating));
-    body.hashtags.forEach((tag) => formData.append('hashtags', tag));
+    const requestPayload = {
+      review_contents: body.reviewContents,
+      review_rating: body.reviewRating,
+      hashtag: body.hashtags.slice(0, 3).map(normalizeHashtag),
+    };
+
+    formData.append(
+      'request',
+      new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }),
+    );
     body.images?.forEach((img) => formData.append('images', img));
 
     await http.post(`/api/stores/${storeId}/reviews`, formData, {

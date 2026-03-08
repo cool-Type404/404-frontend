@@ -1,33 +1,30 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import Modal from '@/components/Modal/Modal';
-import IconButton from '@/components/IconButton/IconButton';
 import Button from '@/components/Button/Button';
-import Divider from '@/components/Divider/Divider';
 import { CommonIcon } from '@/components/CommonIcon/CommonIcon';
+import Divider from '@/components/Divider/Divider';
+import IconButton from '@/components/IconButton/IconButton';
+import Modal from '@/components/Modal/Modal';
 import Textarea from '@/components/Textarea/Textarea';
 
 import styles from './PlaceWriteReviewModal.module.css';
 
-// ✅ 백엔드로 보낼 “작성 payload” 타입 (나중에 API 붙일 때 그대로 쓰기 좋음)
 export type CreateReviewPayload = {
   placeId: number;
-  rating: number; // 0~5
-  hashtags: string[]; // 0~3
+  rating: number;
+  hashtags: string[];
   content: string;
-  images: File[]; // 최대 3장
+  images: File[];
 };
 
-// ✅ Flow에서 리뷰State에 추가하려면 실제 Review 타입이 필요할 수 있음.
-// 여기서는 payload만 넘기고, Flow에서 Review로 변환해서 push하는 방식 권장.
 type Props = {
   open: boolean;
   onClose: () => void;
   onBack: () => void;
   placeId: number;
   placeName: string;
-
-  /** 등록 버튼 눌렀을 때 상위(Flow)로 payload 전달 */
+  isSubmitting?: boolean;
+  submitError?: string;
   onSubmitReview?: (payload: CreateReviewPayload) => void;
 };
 
@@ -40,38 +37,46 @@ export default function PlaceWriteReviewModal({
   onBack,
   placeName,
   placeId,
+  isSubmitting = false,
+  submitError = '',
   onSubmitReview,
 }: Props) {
-  const [rating, setRating] = useState<number>(0);
-
-  const hashtagOptions = useMemo(
-    () => ['#혼밥가능', '#가성비', '#조용함', '#빠른회전', '#든든함', '#깔끔함'],
-    [],
-  );
+  const [rating, setRating] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
-  const [content, setContent] = useState<string>('');
-
+  const [content, setContent] = useState('');
   const [images, setImages] = useState<File[]>([]);
+  const [formError, setFormError] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const toggleTag = useCallback(
-    (tag: string) => {
-      setSelectedTags((prev) => {
-        const exists = prev.includes(tag);
-        if (exists) return prev.filter((t) => t !== tag);
-        if (prev.length >= MAX_HASHTAGS) return prev;
-        return [...prev, tag];
-      });
-    },
-    [setSelectedTags],
+  const hashtagOptions = useMemo(
+    () => ['#가성비 좋은', '#믿고가는 맛집', '#빠른 회전률', '#쾌적한 매장', '#친절한 응대', '#든든한 한끼'],
+    [],
   );
 
+  const resetForm = useCallback(() => {
+    setRating(0);
+    setSelectedTags([]);
+    setContent('');
+    setImages([]);
+    setFormError('');
+  }, []);
+
+  const toggleTag = useCallback((tag: string) => {
+    setSelectedTags((prev) => {
+      if (prev.includes(tag)) {
+        return prev.filter((value) => value !== tag);
+      }
+
+      if (prev.length >= MAX_HASHTAGS) {
+        return prev;
+      }
+
+      return [...prev, tag];
+    });
+  }, []);
+
   const isTagDisabled = useCallback(
-    (tag: string) => {
-      const selected = selectedTags.includes(tag);
-      return !selected && selectedTags.length >= MAX_HASHTAGS;
-    },
+    (tag: string) => !selectedTags.includes(tag) && selectedTags.length >= MAX_HASHTAGS,
     [selectedTags],
   );
 
@@ -79,65 +84,56 @@ export default function PlaceWriteReviewModal({
     fileInputRef.current?.click();
   }, []);
 
-  const handleFilesChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (files.length === 0) return;
+  const handleFilesChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
 
-    setImages((prev) => {
-      const merged = [...prev, ...files].slice(0, MAX_IMAGES);
-      return merged;
-    });
+    if (files.length === 0) {
+      return;
+    }
 
-    e.target.value = '';
+    setImages((prev) => [...prev, ...files].slice(0, MAX_IMAGES));
+    event.target.value = '';
   }, []);
 
   const handleSubmit = useCallback(() => {
-    const payload: CreateReviewPayload = {
+    if (rating < 1) {
+      setFormError('별점을 선택해 주세요.');
+      return;
+    }
+
+    if (!content.trim()) {
+      setFormError('리뷰 내용을 입력해 주세요.');
+      return;
+    }
+
+    setFormError('');
+
+    onSubmitReview?.({
       placeId,
       rating,
       hashtags: selectedTags,
       content: content.trim(),
       images,
-    };
+    });
+  }, [content, images, onSubmitReview, placeId, rating, selectedTags]);
 
-    // ✅ “백엔드가 있다고 가정”: 여기서 API 호출이 들어갈 자리
-    // await createReview(placeId, payload) 같은 형태가 될 것
-    // 지금은 상위로 넘겨서 mock state에 추가
-    onSubmitReview?.(payload);
-
-    // 등록 후 상세로 돌아가기(Flow view를 'detail'로)
-    onBack();
-  }, [placeId, rating, selectedTags, content, images, onSubmitReview, onBack]);
-
-  // 모달 열릴 때마다 초기화(원하면 유지로 바꿔도 됨)
-  // "작성 중 닫았다가 다시 열면 초기화"가 일반적으로 자연스러움
-  const resetIfOpen = useCallback(() => {
-    setRating(0);
-    setSelectedTags([]);
-    setContent('');
-    setImages([]);
-  }, []);
-
-  // Modal 컴포넌트가 open 시점 훅을 제공하지 않으니, 간단하게 open true일 때만 최초 렌더에서 초기화하고 싶다면
-  // Flow에서 view 전환 시 place-detail 쪽에서 state reset을 시켜도 됨.
-  // 여기서는 “닫힐 때 onClose로 나갈 수 있으니” 닫기 버튼에서 초기화 후 닫도록 처리:
   const handleClose = useCallback(() => {
-    resetIfOpen();
+    resetForm();
     onClose();
-  }, [onClose, resetIfOpen]);
+  }, [onClose, resetForm]);
 
   const handleBack = useCallback(() => {
-    resetIfOpen();
+    resetForm();
     onBack();
-  }, [onBack, resetIfOpen]);
+  }, [onBack, resetForm]);
 
-  const HeaderLeft = (
+  const headerLeft = (
     <IconButton ariaLabel="뒤로가기" tone="green" size={25} onClick={handleBack}>
       <CommonIcon name="leftdir" />
     </IconButton>
   );
 
-  const HeaderRight = (
+  const headerRight = (
     <IconButton ariaLabel="닫기" tone="green" size={25} onClick={handleClose}>
       <CommonIcon name="crossclose" />
     </IconButton>
@@ -149,8 +145,8 @@ export default function PlaceWriteReviewModal({
       onClose={handleClose}
       title={placeName}
       titleAlign="center"
-      headerLeft={HeaderLeft}
-      headerRight={HeaderRight}
+      headerLeft={headerLeft}
+      headerRight={headerRight}
       closeOnEsc
       closeOnOverlayClick={false}
       className={styles.modal}
@@ -162,22 +158,20 @@ export default function PlaceWriteReviewModal({
 
           <div className={styles.section}>
             <div className={styles.labelRow}>
-              <div className={styles.label}>평점</div>
+              <div className={styles.label}>별점</div>
               <div className={styles.helper}>{rating}/5</div>
             </div>
 
-            <div className={styles.stars} role="radiogroup" aria-label="평점 선택">
-              {Array.from({ length: 5 }, (_, idx) => {
-                const value = idx + 1;
+            <div className={styles.stars} role="radiogroup" aria-label="별점 선택">
+              {Array.from({ length: 5 }, (_, index) => {
+                const value = index + 1;
                 const filled = value <= rating;
 
                 return (
                   <button
                     key={value}
                     type="button"
-                    className={[styles.starBtn, filled ? styles.starFilled : styles.starEmpty].join(
-                      ' ',
-                    )}
+                    className={[styles.starBtn, filled ? styles.starFilled : styles.starEmpty].join(' ')}
                     onClick={() => setRating(value)}
                     aria-label={`${value}점`}
                     aria-checked={filled}
@@ -239,7 +233,7 @@ export default function PlaceWriteReviewModal({
               variant="multi"
               value={content}
               onChange={(value) => setContent(value)}
-              placeholder={'음식이 맛있었나요?\n혼밥러들에게 유용한 리뷰를 남겨주세요!'}
+              placeholder={'음식은 맛있었나요?\n혼밥러들에게 유용한 리뷰를 남겨주세요.'}
               maxLength={200}
             />
           </div>
@@ -253,12 +247,10 @@ export default function PlaceWriteReviewModal({
             <div className={styles.attachWrap}>
               <button type="button" className={styles.attachBtn} onClick={handlePickImages}>
                 <div className={styles.attachIcon} aria-hidden="true">
-                  <span style={{ fontSize: 20, fontWeight: 900 }}>＋</span>
+                  <span style={{ fontSize: 20, fontWeight: 900 }}>+</span>
                 </div>
                 <div className={styles.attachHint}>
-                  {images.length === 0
-                    ? '최대 3장까지 가능'
-                    : `${images.length}/${MAX_IMAGES} 선택됨`}
+                  {images.length === 0 ? '최대 3장까지 가능' : `${images.length}/${MAX_IMAGES} 선택됨`}
                 </div>
               </button>
 
@@ -272,11 +264,14 @@ export default function PlaceWriteReviewModal({
               />
             </div>
           </div>
+
+          {formError ? <p className={styles.errorText}>{formError}</p> : null}
+          {submitError ? <p className={styles.errorText}>{submitError}</p> : null}
         </div>
 
         <div className={[styles.footer, styles.footerOne].join(' ')}>
-          <Button variant="primary" type="button" onClick={handleSubmit}>
-            리뷰 등록하기
+          <Button variant="primary" type="button" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? '리뷰 등록 중...' : '리뷰 등록하기'}
           </Button>
         </div>
       </div>
