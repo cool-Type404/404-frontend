@@ -19,6 +19,12 @@ export interface StoreLocationsResponse {
   stores: StoreLocation[];
 }
 
+export interface FilterStoresParams {
+  storeType?: string[];
+  eatingLevel?: string[];
+  seat?: number[];
+}
+
 export const getStoreList = async (): Promise<StoreListItem[]> => {
   try {
     const { data } = await http.get('/api/stores');
@@ -42,6 +48,25 @@ export const searchStores = async (storeName: string): Promise<StoreListItem[]> 
     const { data } = await http.get('/api/stores/search', {
       params: { storeName },
     });
+    return data;
+  } catch (error) {
+    throw parseApiError(error);
+  }
+};
+
+export const filterStores = async ({
+  storeType = [],
+  eatingLevel = [],
+  seat = [],
+}: FilterStoresParams): Promise<StoreListItem[]> => {
+  try {
+    const params = new URLSearchParams();
+
+    storeType.forEach((value) => params.append('storeType', value));
+    eatingLevel.forEach((value) => params.append('eatingLevel', value));
+    seat.forEach((value) => params.append('seat', String(value)));
+
+    const { data } = await http.get('/api/stores/filter', { params });
     return data;
   } catch (error) {
     throw parseApiError(error);

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
+import { useQueries } from '@tanstack/react-query';
 
 import KakaoMap from '../components/KakaoMap';
 import Button from '../components/Button/Button';
@@ -10,10 +11,13 @@ import { CommonIcon } from '../components/CommonIcon/CommonIcon';
 import { useRestaurantList } from '@/features/main-map/hooks/useRestaurantList';
 import { useStoreLocations } from '@/features/main-map/hooks/useStoreLocations';
 import { useStoreSearch } from '@/features/main-map/hooks/useStoreSearch';
+import { useFilteredStores } from '@/features/main-map/hooks/useFilteredStores';
+import { getStoreDetail, getStoreReviews } from '@/features/place-detail/api/placeDetail.api';
 
 import styles from './MapScreen.module.css';
 
 type StoreCategory = 'KOREAN' | 'JAPANESE' | 'CHINESE' | 'WESTERN' | 'SNACK' | 'ASIAN';
+type SortKey = 'recommend' | 'rating' | 'eatingLevel' | 'reviews';
 
 type StoreSummary = {
   id: number;
@@ -21,6 +25,11 @@ type StoreSummary = {
   category: StoreCategory;
   isOpen: boolean;
   rating: number;
+};
+
+type CategoryOption = {
+  label: string;
+  value: StoreCategory;
 };
 
 const categoryLabelMap: Record<StoreCategory, string> = {
@@ -32,10 +41,50 @@ const categoryLabelMap: Record<StoreCategory, string> = {
   ASIAN: '아시안',
 };
 
+const categoryOptions: CategoryOption[] = [
+  { label: '한식', value: 'KOREAN' },
+  { label: '중식', value: 'CHINESE' },
+  { label: '일식', value: 'JAPANESE' },
+  { label: '양식', value: 'WESTERN' },
+  { label: '분식', value: 'SNACK' },
+  { label: '아시안', value: 'ASIAN' },
+];
+
+const sortOptions: Array<{ key: SortKey; label: string }> = [
+  { key: 'recommend', label: '추천순' },
+  { key: 'rating', label: '평점 높은순' },
+  { key: 'eatingLevel', label: '혼밥 레벨순' },
+  { key: 'reviews', label: '리뷰 많은순' },
+];
+
+const getEatingLevelRank = (value: string | undefined) => {
+  if (!value) return Number.MAX_SAFE_INTEGER;
+  const rank = Number.parseInt(value, 10);
+  return Number.isNaN(rank) ? Number.MAX_SAFE_INTEGER : rank;
+};
+
+const toStoreSummary = (store: {
+  storeInfoPK: number;
+  storeName: string;
+  storeCategory: string;
+  isOpen: boolean;
+  storeRating: number;
+}): StoreSummary => ({
+  id: store.storeInfoPK,
+  name: store.storeName,
+  category: store.storeCategory as StoreCategory,
+  isOpen: store.isOpen,
+  rating: store.storeRating,
+});
+
 export default function MapScreen() {
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [appliedSort, setAppliedSort] = useState<SortKey>('recommend');
+  const [draftSort, setDraftSort] = useState<SortKey>('recommend');
+  const [appliedCategories, setAppliedCategories] = useState<StoreCategory[]>([]);
+  const [draftCategories, setDraftCategories] = useState<StoreCategory[]>([]);
   const [debouncedQuery] = useDebounce(searchQuery, 300);
 
   const {
@@ -43,6 +92,11 @@ export default function MapScreen() {
     isLoading: isStoreListLoading,
     isError: isStoreListError,
   } = useRestaurantList();
+  const {
+    data: filteredStores = [],
+    isLoading: isFilteredStoresLoading,
+    isError: isFilteredStoresError,
+  } = useFilteredStores(appliedCategories);
   const {
     data: locationsData,
     isLoading: isLocationsLoading,
@@ -54,17 +108,113 @@ export default function MapScreen() {
     isError: isSearchError,
   } = useStoreSearch(debouncedQuery);
 
-  const displayedStores = useMemo<StoreSummary[]>(() => {
-    const source = debouncedQuery.trim() ? searchedStores : stores;
+  const baseStores = useMemo(() => {
+    if (debouncedQuery.trim()) {
+      return searchedStores;
+    }
 
-    return source.map((store) => ({
-      id: store.storeInfoPK,
-      name: store.storeName,
-      category: store.storeCategory as StoreCategory,
-      isOpen: store.isOpen,
-      rating: store.storeRating,
-    }));
-  }, [debouncedQuery, searchedStores, stores]);
+    if (appliedCategories.length > 0) {
+      return filteredStores;
+    }
+
+    return stores;
+  }, [appliedCategories.length, debouncedQuery, filteredStores, searchedStores, stores]);
+
+  const baseSummaries = useMemo(() => {
+    const summaries = baseStores.map(toStoreSummary);
+
+    if (!debouncedQuery.trim() || appliedCategories.length === 0) {
+      return summaries;
+    }
+
+    return summaries.filter((store) => appliedCategories.includes(store.category));
+  }, [appliedCategories, baseStores, debouncedQuery]);
+
+  const sortMetaQueries = useQueries({
+    queries: baseSummaries.map((store) => {
+      if (appliedSort === 'eatingLevel') {
+        return {
+          queryKey: ['storeEatingLevel', store.id],
+          queryFn: async () => {
+            const detail = await getStoreDetail(store.id);
+            return {
+              storeId: store.id,
+              eatingLevel: detail.eatingLevel,
+            };
+          },
+          staleTime: 5 * 60 * 1000,
+        };
+      }
+
+      if (appliedSort === 'reviews') {
+        return {
+          queryKey: ['storeReviewCount', store.id],
+          queryFn: async () => {
+            const reviews = await getStoreReviews(store.id);
+            return {
+              storeId: store.id,
+              reviewCount: reviews.length,
+            };
+          },
+          staleTime: 5 * 60 * 1000,
+        };
+      }
+
+      return {
+        queryKey: ['storeSortPlaceholder', store.id, appliedSort],
+        queryFn: async () => ({ storeId: store.id }),
+        enabled: false,
+      };
+    }),
+  });
+
+  const eatingLevelMap = useMemo(() => {
+    return new Map(
+      sortMetaQueries
+        .map((query) => query.data)
+        .filter(
+          (item): item is { storeId: number; eatingLevel: string } =>
+            Boolean(item && 'eatingLevel' in item && typeof item.eatingLevel === 'string'),
+        )
+        .map((item) => [item.storeId, item.eatingLevel]),
+    );
+  }, [sortMetaQueries]);
+
+  const reviewCountMap = useMemo(() => {
+    return new Map(
+      sortMetaQueries
+        .map((query) => query.data)
+        .filter(
+          (item): item is { storeId: number; reviewCount: number } =>
+            Boolean(item && 'reviewCount' in item && typeof item.reviewCount === 'number'),
+        )
+        .map((item) => [item.storeId, item.reviewCount]),
+    );
+  }, [sortMetaQueries]);
+
+  const displayedStores = useMemo(() => {
+    const copied = [...baseSummaries];
+
+    switch (appliedSort) {
+      case 'rating':
+        copied.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'eatingLevel':
+        copied.sort(
+          (a, b) =>
+            getEatingLevelRank(eatingLevelMap.get(a.id)) - getEatingLevelRank(eatingLevelMap.get(b.id)),
+        );
+        break;
+      case 'reviews':
+        copied.sort((a, b) => (reviewCountMap.get(b.id) ?? -1) - (reviewCountMap.get(a.id) ?? -1));
+        break;
+      case 'recommend':
+      default:
+        break;
+    }
+
+    return copied;
+  }, [appliedSort, baseSummaries, eatingLevelMap, reviewCountMap]);
 
   const locationMap = useMemo(() => {
     return new Map(
@@ -107,8 +257,36 @@ export default function MapScreen() {
     }
   }, [displayedStores, selectedStoreId]);
 
-  const isLoading = isStoreListLoading || isLocationsLoading;
-  const hasError = isStoreListError || isLocationsError || isSearchError;
+  const handleOpenFilter = () => {
+    setDraftSort(appliedSort);
+    setDraftCategories(appliedCategories);
+    setIsFilterOpen(true);
+  };
+
+  const handleToggleDraftCategory = (category: StoreCategory) => {
+    setDraftCategories((current) =>
+      current.includes(category)
+        ? current.filter((value) => value !== category)
+        : [...current, category],
+    );
+  };
+
+  const handleResetFilter = () => {
+    setDraftSort('recommend');
+    setDraftCategories([]);
+  };
+
+  const handleApplyFilter = () => {
+    setAppliedSort(draftSort);
+    setAppliedCategories(draftCategories);
+    setIsFilterOpen(false);
+  };
+
+  const isLoading = isStoreListLoading || isLocationsLoading || (appliedCategories.length > 0 && isFilteredStoresLoading);
+  const isSortMetaLoading =
+    (appliedSort === 'eatingLevel' || appliedSort === 'reviews') &&
+    sortMetaQueries.some((query) => query.isLoading || query.isFetching);
+  const hasError = isStoreListError || isLocationsError || isSearchError || isFilteredStoresError;
 
   return (
     <div className={styles.root}>
@@ -135,7 +313,7 @@ export default function MapScreen() {
           type="button"
           className={styles.filterButton}
           aria-label="필터"
-          onClick={() => setIsFilterOpen(true)}
+          onClick={handleOpenFilter}
         >
           <CommonIcon name="filter" size={24} className={styles.filterIcon} />
           <span>필터</span>
@@ -157,7 +335,7 @@ export default function MapScreen() {
         {hasError ? <div className={styles.feedbackCard}>식당 정보를 불러오지 못했습니다.</div> : null}
 
         <div className={styles.list}>
-          {isLoading || isSearching ? (
+          {isLoading || isSearching || isSortMetaLoading ? (
             <div className={styles.feedbackCard}>식당 정보를 불러오는 중입니다.</div>
           ) : displayedStores.length === 0 ? (
             <div className={styles.feedbackCard}>조건에 맞는 식당이 없습니다.</div>
@@ -230,26 +408,23 @@ export default function MapScreen() {
           <section className={styles.filterSection}>
             <div className={styles.filterSectionHeader}>
               <h3 className={styles.filterSectionTitle}>정렬</h3>
-              <span className={styles.filterBadge}>추천순</span>
+              <span className={styles.filterBadge}>
+                {sortOptions.find((option) => option.key === draftSort)?.label ?? '추천순'}
+              </span>
             </div>
 
             <div className={styles.filterGrid}>
-              <button type="button" className={`${styles.filterPill} ${styles.filterPillActive}`}>
-                <span>추천순</span>
-                <span className={styles.filterRadio} />
-              </button>
-              <button type="button" className={styles.filterPill}>
-                <span>평점 높은순</span>
-                <span className={styles.filterRadio} />
-              </button>
-              <button type="button" className={styles.filterPill}>
-                <span>혼밥 레벨순</span>
-                <span className={styles.filterRadio} />
-              </button>
-              <button type="button" className={styles.filterPill}>
-                <span>리뷰 많은순</span>
-                <span className={styles.filterRadio} />
-              </button>
+              {sortOptions.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  className={`${styles.filterPill} ${draftSort === option.key ? styles.filterPillActive : ''}`}
+                  onClick={() => setDraftSort(option.key)}
+                >
+                  <span>{option.label}</span>
+                  <span className={styles.filterRadio} />
+                </button>
+              ))}
             </div>
           </section>
 
@@ -259,22 +434,26 @@ export default function MapScreen() {
             </div>
 
             <div className={styles.categoryGrid}>
-              <button type="button" className={`${styles.categoryPill} ${styles.categoryPillActive}`}>
-                한식
-              </button>
-              <button type="button" className={styles.categoryPill}>중식</button>
-              <button type="button" className={styles.categoryPill}>일식</button>
-              <button type="button" className={styles.categoryPill}>양식</button>
-              <button type="button" className={styles.categoryPill}>분식</button>
-              <button type="button" className={styles.categoryPill}>카페</button>
-              <button type="button" className={styles.categoryPill}>아시안</button>
-              <button type="button" className={styles.categoryPill}>기타</button>
+              {categoryOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`${styles.categoryPill} ${draftCategories.includes(option.value) ? styles.categoryPillActive : ''}`}
+                  onClick={() => handleToggleDraftCategory(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
           </section>
 
           <div className={styles.filterActions}>
-            <button type="button" className={styles.resetButton}>초기화</button>
-            <button type="button" className={styles.applyButton}>적용</button>
+            <button type="button" className={styles.resetButton} onClick={handleResetFilter}>
+              초기화
+            </button>
+            <button type="button" className={styles.applyButton} onClick={handleApplyFilter}>
+              적용
+            </button>
           </div>
         </div>
       </Modal>
