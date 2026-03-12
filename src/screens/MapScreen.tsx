@@ -18,6 +18,8 @@ import MyPageModal from '@/features/mypage/components/MyPageModal/MyPageModal';
 import PlaceRequestModal from '@/features/place-request/components/PlaceRequestModal/PlaceRequestModal';
 import { getStoreDetail, getStoreReviews } from '@/features/place-detail/api/placeDetail.api';
 import PlaceDetailModalFlow from '@/features/place-detail/flow/PlaceDetailModalFlow';
+import { getIsStoreOpen } from '@/utils/openingHours';
+import surprisedImg from '@/assets/BobImages/surprised.png';
 
 import styles from './MapScreen.module.css';
 
@@ -151,6 +153,13 @@ export default function MapScreen() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [signUpMessage, setSignUpMessage] = useState('');
   const [signUpError, setSignUpError] = useState('');
+  const [signUpFieldErrors, setSignUpFieldErrors] = useState({
+    email: false,
+    code: false,
+    password: false,
+    nickname: false,
+    eatingLevel: false,
+  });
 
   useEffect(() => {
     setIsLoggedIn(Boolean(window.localStorage.getItem('accessToken')));
@@ -249,6 +258,42 @@ export default function MapScreen() {
     [sortMetaQueries],
   );
 
+  const openStatusQueries = useQueries({
+    queries: baseSummaries.map((store) => ({
+      queryKey: ['storeOpenStatus', store.id],
+      queryFn: async () => {
+        const detail = await getStoreDetail(store.id);
+        return {
+          storeId: store.id,
+          isOpen: getIsStoreOpen(
+            detail.openingHours.map((openingHour) => ({
+              days: openingHour.days,
+              start_time: openingHour.startTime,
+              end_time: openingHour.endTime,
+              break_start_time: openingHour.breakStartTime ?? null,
+              break_end_time: openingHour.breakEndTime ?? null,
+            })),
+          ),
+        };
+      },
+      staleTime: 60 * 1000,
+    })),
+  });
+
+  const openStatusMap = useMemo(
+    () =>
+      new Map(
+        openStatusQueries
+          .map((query) => query.data)
+          .filter(
+            (item): item is { storeId: number; isOpen: boolean } =>
+              Boolean(item && 'isOpen' in item && typeof item.isOpen === 'boolean'),
+          )
+          .map((item) => [item.storeId, item.isOpen]),
+      ),
+    [openStatusQueries],
+  );
+
   const displayedStores = useMemo(() => {
     const copied = [...baseSummaries];
 
@@ -333,6 +378,7 @@ export default function MapScreen() {
     setIsMenuOpen(false);
     setSignUpMessage('');
     setSignUpError('');
+    setSignUpFieldErrors({ email: false, code: false, password: false, nickname: false, eatingLevel: false });
     setIsSignUpOpen(true);
   };
 
@@ -369,10 +415,12 @@ export default function MapScreen() {
   const handleCloseSignUp = () => {
     setIsSignUpOpen(false);
     setShowSignUpPassword(false);
+    setSignUpFieldErrors({ email: false, code: false, password: false, nickname: false, eatingLevel: false });
   };
 
   const handleSendVerification = async () => {
     if (!signUpEmail.trim()) {
+      setSignUpFieldErrors((prev) => ({ ...prev, email: true }));
       setSignUpError('이메일을 먼저 입력해 주세요.');
       setSignUpMessage('');
       return;
@@ -395,6 +443,11 @@ export default function MapScreen() {
 
   const handleVerifyCode = async () => {
     if (!signUpEmail.trim() || !signUpCode.trim()) {
+      setSignUpFieldErrors((prev) => ({
+        ...prev,
+        email: !signUpEmail.trim(),
+        code: !signUpCode.trim(),
+      }));
       setSignUpError('이메일과 인증 코드를 입력해 주세요.');
       setSignUpMessage('');
       return;
@@ -423,7 +476,17 @@ export default function MapScreen() {
   };
 
   const handleSubmitSignUp = async () => {
-    if (!signUpEmail.trim() || !signUpPassword.trim() || !signUpNickname.trim() || !signUpEatingLevel) {
+    const requiredFieldErrors = {
+      email: !signUpEmail.trim(),
+      code: !signUpCode.trim(),
+      password: !signUpPassword.trim(),
+      nickname: !signUpNickname.trim(),
+      eatingLevel: !signUpEatingLevel,
+    };
+
+    setSignUpFieldErrors(requiredFieldErrors);
+
+    if (!signUpEmail.trim() || !signUpCode.trim() || !signUpPassword.trim() || !signUpNickname.trim() || !signUpEatingLevel) {
       setSignUpError('필수 항목을 모두 입력해 주세요.');
       setSignUpMessage('');
       return;
@@ -474,6 +537,7 @@ export default function MapScreen() {
       setSignUpEatingLevel('');
       setIsEmailVerified(false);
       setShowSignUpPassword(false);
+      setSignUpFieldErrors({ email: false, code: false, password: false, nickname: false, eatingLevel: false });
       window.setTimeout(() => setIsSignUpOpen(false), 600);
     } catch (error) {
       setSignUpError(error instanceof Error ? error.message : '회원가입에 실패했습니다.');
@@ -590,6 +654,7 @@ export default function MapScreen() {
           ) : (
             displayedStores.map((store) => {
               const isSelected = selectedStoreId === store.id;
+              const isStoreOpen = openStatusMap.get(store.id) ?? store.isOpen;
 
               return (
                 <button
@@ -617,8 +682,8 @@ export default function MapScreen() {
                   </div>
 
                   <div className={styles.cardRight}>
-                    <Chip variant={store.isOpen ? 'open' : 'closed'} size="sm">
-                      {store.isOpen ? '영업중' : '영업전'}
+                    <Chip variant={isStoreOpen ? 'open' : 'closed'} size="sm">
+                      {isStoreOpen ? '영업중' : '영업전'}
                     </Chip>
 
                     <div className={styles.rating}>
@@ -683,7 +748,13 @@ export default function MapScreen() {
         <div className={styles.withdrawBody}>
           <h2 className={styles.withdrawTitle}>회원 탈퇴하기</h2>
 
-          <div className={styles.withdrawImagePlaceholder} aria-hidden="true" />
+          <img
+            src={surprisedImg}
+            alt=""
+            className={styles.withdrawImage}
+            draggable={false}
+            aria-hidden="true"
+          />
 
           <p className={styles.withdrawHeadline}>정말 탈퇴하시겠습니까?</p>
           <p className={styles.withdrawDescription}>
@@ -789,7 +860,13 @@ export default function MapScreen() {
       ) : null}
 
       <Modal open={isLoginOpen} onClose={handleCloseLogin} closeOnOverlayClick className={styles.loginModal}>
-        <div className={styles.loginBody}>
+        <form
+          className={styles.loginBody}
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSubmitLogin();
+          }}
+        >
           <h2 className={styles.loginTitle}>로그인 하기</h2>
 
           <div className={styles.signUpField}>
@@ -825,10 +902,10 @@ export default function MapScreen() {
 
           {loginError ? <p className={styles.signUpErrorText}>{loginError}</p> : null}
 
-          <button type="button" className={styles.signUpSubmitButton} onClick={handleSubmitLogin} disabled={isLoggingIn}>
+          <button type="submit" className={styles.signUpSubmitButton} disabled={isLoggingIn}>
             {isLoggingIn ? '로그인 중...' : '로그인'}
           </button>
-        </div>
+        </form>
       </Modal>
 
       <Modal open={isSignUpOpen} onClose={handleCloseSignUp} closeOnOverlayClick className={styles.signUpModal}>
@@ -839,12 +916,13 @@ export default function MapScreen() {
             <label className={styles.signUpLabel}>이메일</label>
             <div className={styles.emailRow}>
               <input
-                className={styles.signUpInput}
+                className={`${styles.signUpInput} ${signUpFieldErrors.email ? styles.signUpInputError : ''}`}
                 type="email"
                 value={signUpEmail}
                 onChange={(event) => {
                   setSignUpEmail(event.target.value);
                   setIsEmailVerified(false);
+                  setSignUpFieldErrors((prev) => ({ ...prev, email: false }));
                 }}
                 placeholder="example@email.com"
               />
@@ -858,12 +936,13 @@ export default function MapScreen() {
             <label className={styles.signUpLabel}>인증 코드</label>
             <div className={styles.emailRow}>
               <input
-                className={styles.signUpInput}
+                className={`${styles.signUpInput} ${signUpFieldErrors.code ? styles.signUpInputError : ''}`}
                 type="text"
                 value={signUpCode}
                 onChange={(event) => {
                   setSignUpCode(event.target.value);
                   setIsEmailVerified(false);
+                  setSignUpFieldErrors((prev) => ({ ...prev, code: false }));
                 }}
                 placeholder="6자리 코드를 입력해 주세요"
               />
@@ -877,10 +956,13 @@ export default function MapScreen() {
             <label className={styles.signUpLabel}>비밀번호</label>
             <div className={styles.passwordRow}>
               <input
-                className={`${styles.signUpInput} ${styles.signUpInputError}`}
+                className={`${styles.signUpInput} ${signUpFieldErrors.password ? styles.signUpInputError : ''}`}
                 type={showSignUpPassword ? 'text' : 'password'}
                 value={signUpPassword}
-                onChange={(event) => setSignUpPassword(event.target.value)}
+                onChange={(event) => {
+                  setSignUpPassword(event.target.value);
+                  setSignUpFieldErrors((prev) => ({ ...prev, password: false }));
+                }}
               />
               <button
                 type="button"
@@ -896,10 +978,13 @@ export default function MapScreen() {
           <div className={styles.signUpField}>
             <label className={styles.signUpLabel}>닉네임</label>
             <input
-              className={styles.signUpInput}
+              className={`${styles.signUpInput} ${signUpFieldErrors.nickname ? styles.signUpInputError : ''}`}
               type="text"
               value={signUpNickname}
-              onChange={(event) => setSignUpNickname(event.target.value)}
+              onChange={(event) => {
+                setSignUpNickname(event.target.value);
+                setSignUpFieldErrors((prev) => ({ ...prev, nickname: false }));
+              }}
               placeholder="닉네임"
             />
           </div>
@@ -932,7 +1017,14 @@ export default function MapScreen() {
 
           <div className={styles.signUpField}>
             <label className={styles.signUpLabel}>혼밥 레벨</label>
-            <select className={styles.signUpSelect} value={signUpEatingLevel} onChange={(event) => setSignUpEatingLevel(event.target.value)}>
+            <select
+              className={`${styles.signUpSelect} ${signUpFieldErrors.eatingLevel ? styles.signUpInputError : ''}`}
+              value={signUpEatingLevel}
+              onChange={(event) => {
+                setSignUpEatingLevel(event.target.value);
+                setSignUpFieldErrors((prev) => ({ ...prev, eatingLevel: false }));
+              }}
+            >
               <option value="">선택</option>
               <option value="1레벨">1레벨</option>
               <option value="2레벨">2레벨</option>
