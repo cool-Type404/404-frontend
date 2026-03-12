@@ -1,15 +1,24 @@
-export function toApiAssetUrl(path?: string | null) {
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
+function normalizeApiPath(path: string): string {
+  if (path.startsWith('/api/')) return path;
+  if (path.startsWith('/')) return `/api${path}`;
+  return `/api/${path}`;
+}
+
+export function getApiBaseUrl(): string {
+  return API_BASE_URL;
+}
+
+export function toApiUrl(path?: string | null): string {
   if (!path) return '';
 
-  // 이미 절대 URL이면 그대로 사용 (혹시 CDN 등)
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
 
-  // 이미 /api 로 시작하면 그대로
-  if (path.startsWith('/api/')) return path;
+  const normalizedPath = normalizeApiPath(path);
+  return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath;
+}
 
-  // /로 시작하면 /api를 앞에 붙여서 프록시 타게 함
-  if (path.startsWith('/')) return `/api${path}`;
-
-  // 그 외(상대경로)는 /api/ 로 보정
-  return `/api/${path}`;
+export function toApiAssetUrl(path?: string | null): string {
+  return toApiUrl(path);
 }
