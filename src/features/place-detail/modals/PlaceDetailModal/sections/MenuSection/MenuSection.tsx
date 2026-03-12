@@ -3,6 +3,7 @@ import { CommonIcon } from '@/components/CommonIcon/CommonIcon';
 import { Divider } from '@/components/Divider';
 
 import type { StoreMenu } from '@/features/place-detail/mock_data/placeDetail.types';
+import { toApiAssetUrl } from '@/utils/assetUrl';
 
 import styles from './MenuSection.module.css';
 
@@ -23,7 +24,7 @@ export default function MenuSection({ menus, sectionRef }: Props) {
               <div className={styles.menuImageBox}>
                 {m.menu_img ? (
                   <img
-                    src={`${import.meta.env.VITE_API_BASE_URL}${m.menu_img}`}
+                    src={toApiAssetUrl(m.menu_img)}
                     alt={m.menu_name}
                     className={styles.menuImage}
                     onError={(e) => {

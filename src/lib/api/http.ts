@@ -1,7 +1,8 @@
 import axios, { AxiosError } from 'axios';
+import { getApiBaseUrl } from '@/utils/assetUrl';
 
 export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '',
+  baseURL: getApiBaseUrl(),
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
