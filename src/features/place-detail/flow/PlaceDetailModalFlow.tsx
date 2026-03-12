@@ -1,23 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import Button from '@/components/Button/Button';
+import Modal from '@/components/Modal/Modal';
+import { getBookmarkList, type BookmarkStore } from '@/features/place-detail/api/placeDetail.api';
+import { useBookmark } from '@/features/place-detail/hooks/useBookmark';
+import { useDeleteReview } from '@/features/place-detail/hooks/useDeleteReview';
+import { usePlaceDetail } from '@/features/place-detail/hooks/usePlaceDetail';
+import { usePlaceReviews } from '@/features/place-detail/hooks/usePlaceReviews';
+import { useReviewLike } from '@/features/place-detail/hooks/useReviewLike';
+import { useWriteReview } from '@/features/place-detail/hooks/useWriteReview';
+import type { PlaceDetail, Review } from '@/features/place-detail/mock_data/placeDetail.types';
 import PlaceDetailModal from '@/features/place-detail/modals/PlaceDetailModal/PlaceDetailModal';
+import styles from '@/features/place-detail/modals/PlaceDetailModal/PlaceDetailModal.module.css';
 import PlaceReviewsModal from '@/features/place-detail/modals/PlaceReviewsModal/PlaceReviewsModal';
 import PlaceWriteReviewModal, {
   type CreateReviewPayload,
 } from '@/features/place-detail/modals/PlaceWriteReviewModal/PlaceWriteReviewModal';
-
-import type { PlaceDetail, Review } from '@/features/place-detail/mock_data/placeDetail.types';
-
-import { usePlaceDetail } from '@/features/place-detail/hooks/usePlaceDetail';
-import { usePlaceReviews } from '@/features/place-detail/hooks/usePlaceReviews';
-import { useBookmark } from '@/features/place-detail/hooks/useBookmark';
-import { useReviewLike } from '@/features/place-detail/hooks/useReviewLike';
-import { useWriteReview } from '@/features/place-detail/hooks/useWriteReview';
-import { useDeleteReview } from '@/features/place-detail/hooks/useDeleteReview';
-import { getBookmarkList, type BookmarkStore } from '@/features/place-detail/api/placeDetail.api';
-
-// 추후 auth context/store에서 실제 로그인 유저 ID로 교체해야함
-const CURRENT_USER_ID = 1;
+import { getIsStoreOpen } from '@/utils/openingHours';
 
 type View = 'detail' | 'reviews' | 'write';
 
@@ -30,13 +29,13 @@ type Props = {
 export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) {
   const [view, setView] = useState<View>('detail');
   const [reviewsState, setReviewsState] = useState<Review[]>([]);
-  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isDeleteBlockedOpen, setIsDeleteBlockedOpen] = useState(false);
+
   const currentNickname = window.localStorage.getItem('userNickname') ?? '';
   const isAuthenticated = Boolean(window.localStorage.getItem('accessToken'));
-
   const storeIdNum = storeId != null && !Number.isNaN(Number(storeId)) ? Number(storeId) : null;
 
-  // API 훅
   const { data: detailData, isLoading: isDetailLoading } = usePlaceDetail(storeIdNum ?? 0);
   const { data: reviewsData } = usePlaceReviews(storeIdNum ?? 0);
   const { addBookmark, removeBookmark } = useBookmark(storeIdNum ?? 0);
@@ -44,38 +43,43 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
   const writeReview = useWriteReview(storeIdNum ?? 0);
   const deleteReviewMutation = useDeleteReview(storeIdNum ?? 0);
 
-  // 북마크 초기 상태 확인
   useEffect(() => {
     if (!open || storeIdNum == null) return;
 
     getBookmarkList()
       .then((bookmarks: BookmarkStore[]) => {
-        const bookmarked = bookmarks.some((b: BookmarkStore) => b.storeId === storeIdNum);
-        setIsBookmarked(bookmarked);
+        setIsBookmarked(bookmarks.some((bookmark) => bookmark.storeId === storeIdNum));
       })
       .catch(() => {
         setIsBookmarked(false);
       });
   }, [open, storeIdNum]);
 
-  // API 데이터 → PlaceDetail 타입 변환
   const place: PlaceDetail | null =
     detailData && storeIdNum != null
       ? {
           storeInfoPK: detailData.storeInfoPK,
           store_name: detailData.storeName,
           store_type: detailData.storeCategory,
-          current_open: detailData.isOpen,
+          current_open: getIsStoreOpen(
+            detailData.openingHours.map((openingHour) => ({
+              days: openingHour.days,
+              start_time: openingHour.startTime,
+              end_time: openingHour.endTime,
+              break_start_time: openingHour.breakStartTime ?? null,
+              break_end_time: openingHour.breakEndTime ?? null,
+            })),
+          ),
           avg_rating: detailData.avgRating,
           store_number: detailData.storeNumber,
           bookmarked: isBookmarked,
-          store_menus: detailData.menus.map((m) => ({
-            menu_id: m.menuId,
+          store_menus: detailData.menus.map((menu) => ({
+            menu_id: menu.menuId,
             storeInfoPK: detailData.storeInfoPK,
-            menu_name: m.menuName,
-            price: Number(m.price),
-            is_rec: m.isRec,
-            menu_img: m.menuImg ?? null,
+            menu_name: menu.menuName,
+            price: Number(menu.price),
+            is_rec: menu.isRec,
+            menu_img: menu.menuImg ?? null,
           })),
           store_seat:
             detailData.seats.length > 0
@@ -94,55 +98,58 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
                   triple_seat: false,
                 },
           reviews: [],
-          opening_hours: detailData.openingHours.map((oh) => ({
-            opening_hours_id: oh.openingHoursId,
+          opening_hours: detailData.openingHours.map((openingHour) => ({
+            opening_hours_id: openingHour.openingHoursId,
             storeInfoPK: detailData.storeInfoPK,
-            days: oh.days,
-            start_time: oh.startTime,
-            end_time: oh.endTime,
-            break_start_time: oh.breakStartTime ?? null,
-            break_end_time: oh.breakEndTime ?? null,
+            days: openingHour.days,
+            start_time: openingHour.startTime,
+            end_time: openingHour.endTime,
+            break_start_time: openingHour.breakStartTime ?? null,
+            break_end_time: openingHour.breakEndTime ?? null,
           })),
         }
       : null;
 
-  // API 리뷰 → Review 타입 변환
   useEffect(() => {
     if (!open) return;
+
     setView('detail');
+    setIsDeleteBlockedOpen(false);
 
-    if (reviewsData) {
-      const converted: Review[] = reviewsData.map((r) => ({
-        review_id: r.reviewId,
-        storeInfoPK: storeIdNum ?? 0,
-        user_id: r.userId ?? r.reviewId,
-        review_contents: r.reviewContents,
-        review_rating: r.reviewRating,
-        created_at: r.createdAt,
-        user_nickname: r.userNickname ?? r.reviewWriter ?? '익명',
-        like_count: r.likeCount ?? 0,
-        liked_by_me: r.isLiked ?? false,
-        is_mine:
-          (r.userId != null && r.userId === CURRENT_USER_ID) ||
-          (currentNickname.length > 0 && (r.userNickname ?? r.reviewWriter ?? '') === currentNickname),
-        hashtags: (r.hashtags ?? []).map((h, index) => ({
-          hashtag_id: typeof h === 'string' ? `${r.reviewId}-${index}` : h.hashtagId,
-          review_id: r.reviewId,
-          hashtag_name: typeof h === 'string' ? h : h.hashtagName,
-        })),
-        review_images: (r.reviewImages ?? []).map((img, index) => ({
-          review_img_id: typeof img === 'string' ? `${r.reviewId}-img-${index}` : img.reviewImgId,
-          review_id: r.reviewId,
-          review_img_path: typeof img === 'string' ? img : null,
-        })),
-      }));
-      setReviewsState(converted);
-    }
-  }, [currentNickname, open, reviewsData, storeIdNum]);
+    if (!reviewsData) return;
 
-  // 핸들러
+    const converted: Review[] = reviewsData.map((review) => ({
+      review_id: review.reviewId,
+      storeInfoPK: storeIdNum ?? 0,
+      user_id: review.userId ?? review.reviewId,
+      review_contents: review.reviewContents,
+      review_rating: review.reviewRating,
+      created_at: review.createdAt,
+      user_nickname: review.userNickname ?? review.reviewWriter ?? '익명',
+      like_count: review.likeCount ?? 0,
+      liked_by_me: review.isLiked ?? false,
+      is_mine:
+        isAuthenticated &&
+        currentNickname.length > 0 &&
+        (review.userNickname ?? review.reviewWriter ?? '') === currentNickname,
+      hashtags: (review.hashtags ?? []).map((hashtag, index) => ({
+        hashtag_id: typeof hashtag === 'string' ? `${review.reviewId}-${index}` : hashtag.hashtagId,
+        review_id: review.reviewId,
+        hashtag_name: typeof hashtag === 'string' ? hashtag : hashtag.hashtagName,
+      })),
+      review_images: (review.reviewImages ?? []).map((image, index) => ({
+        review_img_id: typeof image === 'string' ? `${review.reviewId}-img-${index}` : image.reviewImgId,
+        review_id: review.reviewId,
+        review_img_path: typeof image === 'string' ? image : null,
+      })),
+    }));
+
+    setReviewsState(converted);
+  }, [currentNickname, isAuthenticated, open, reviewsData, storeIdNum]);
+
   const handleMoreReviews = useCallback(() => setView('reviews'), []);
   const handleBack = useCallback(() => setView('detail'), []);
+
   const handleWriteReview = useCallback(() => {
     if (!isAuthenticated) {
       window.alert('로그인 후 리뷰를 작성할 수 있습니다.');
@@ -163,29 +170,30 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
         removeBookmark.mutate(undefined, {
           onSuccess: () => setIsBookmarked(false),
         });
-      } else {
-        addBookmark.mutate(undefined, {
-          onSuccess: () => setIsBookmarked(true),
-        });
+        return;
       }
+
+      addBookmark.mutate(undefined, {
+        onSuccess: () => setIsBookmarked(true),
+      });
     },
     [addBookmark, isAuthenticated, removeBookmark],
   );
 
   const handleToggleLike = useCallback(
-    (review_id: string | number) => {
-      const id = Number(review_id);
-      const review = reviewsState.find((r) => r.review_id === review_id);
+    (reviewId: string | number) => {
+      const id = Number(reviewId);
+      const review = reviewsState.find((item) => item.review_id === reviewId);
       if (!review) return;
 
       setReviewsState((prev) =>
-        prev.map((r) => {
-          if (r.review_id !== review_id) return r;
-          const liked = Boolean(r.liked_by_me);
+        prev.map((item) => {
+          if (item.review_id !== reviewId) return item;
+          const liked = Boolean(item.liked_by_me);
           return {
-            ...r,
+            ...item,
             liked_by_me: !liked,
-            like_count: Math.max(0, (r.like_count ?? 0) + (liked ? -1 : 1)),
+            like_count: Math.max(0, (item.like_count ?? 0) + (liked ? -1 : 1)),
           };
         }),
       );
@@ -196,16 +204,23 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
         like.mutate(id);
       }
     },
-    [reviewsState, like, unlike],
+    [like, reviewsState, unlike],
   );
 
   const handleDeleteReview = useCallback(
-    (review_id: string | number) => {
-      const id = Number(review_id);
-      setReviewsState((prev) => prev.filter((r) => r.review_id !== review_id));
+    (reviewId: string | number) => {
+      const review = reviewsState.find((item) => item.review_id === reviewId);
+
+      if (!isAuthenticated || !review?.is_mine) {
+        setIsDeleteBlockedOpen(true);
+        return;
+      }
+
+      const id = Number(reviewId);
+      setReviewsState((prev) => prev.filter((item) => item.review_id !== reviewId));
       deleteReviewMutation.mutate(id);
     },
-    [deleteReviewMutation],
+    [deleteReviewMutation, isAuthenticated, reviewsState],
   );
 
   const handleSubmitReview = useCallback(
@@ -225,23 +240,45 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
     [writeReview],
   );
 
-  // 얼리 리턴
   if (!open || storeIdNum == null) return null;
-  if (isDetailLoading) return <div>로딩 중...</div>;
+  if (isDetailLoading) return <div>로딩 중..</div>;
   if (!place) return null;
 
-  // view 분기
+  const deleteBlockedModal = (
+    <Modal
+      open={isDeleteBlockedOpen}
+      onClose={() => setIsDeleteBlockedOpen(false)}
+      closeOnOverlayClick
+      className={styles.infoModal}
+    >
+      <div className={styles.infoModalBody}>
+        <p className={styles.infoModalMessage}>리뷰를 삭제할 수 없습니다.</p>
+        <Button
+          variant="primary"
+          height={42}
+          className={styles.infoModalButton}
+          onClick={() => setIsDeleteBlockedOpen(false)}
+        >
+          확인
+        </Button>
+      </div>
+    </Modal>
+  );
+
   if (view === 'reviews') {
     return (
-      <PlaceReviewsModal
-        open={open}
-        onClose={onClose}
-        onBack={handleBack}
-        placeName={place.store_name}
-        reviews={reviewsState}
-        onToggleLike={handleToggleLike}
-        onDeleteReview={handleDeleteReview}
-      />
+      <>
+        <PlaceReviewsModal
+          open={open}
+          onClose={onClose}
+          onBack={handleBack}
+          placeName={place.store_name}
+          reviews={reviewsState}
+          onToggleLike={handleToggleLike}
+          onDeleteReview={handleDeleteReview}
+        />
+        {deleteBlockedModal}
+      </>
     );
   }
 
@@ -263,15 +300,18 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
   const placeWithStateReviews: PlaceDetail = { ...place, reviews: reviewsState };
 
   return (
-    <PlaceDetailModal
-      open={open}
-      onClose={onClose}
-      place={placeWithStateReviews}
-      onMoreReviews={handleMoreReviews}
-      onWriteReview={handleWriteReview}
-      onBookmarkToggle={handleBookmarkToggle}
-      onToggleLike={handleToggleLike}
-      onDeleteReview={handleDeleteReview}
-    />
+    <>
+      <PlaceDetailModal
+        open={open}
+        onClose={onClose}
+        place={placeWithStateReviews}
+        onMoreReviews={handleMoreReviews}
+        onWriteReview={handleWriteReview}
+        onBookmarkToggle={handleBookmarkToggle}
+        onToggleLike={handleToggleLike}
+        onDeleteReview={handleDeleteReview}
+      />
+      {deleteBlockedModal}
+    </>
   );
 }

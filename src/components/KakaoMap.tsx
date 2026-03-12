@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import markerDefaultImg from '@/assets/marker_red.svg';
+import markerDefaultImg from '@/assets/marker_default.png';
 
 type KakaoLatLng = unknown;
 type KakaoSize = unknown;
