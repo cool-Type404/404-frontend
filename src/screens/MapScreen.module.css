@@ -25,6 +25,19 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brandImage {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .title {
   margin: 0;
   font-size: 20px;
