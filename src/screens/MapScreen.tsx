@@ -12,13 +12,13 @@ import { FoodCategoryIcon } from '@/components/FoodCategoryIcon';
 import { login, logout, sendVerificationEmail, signUp, verifyEmailCode } from '@/features/auth/api/auth.api';
 import { useRestaurantList } from '@/features/main-map/hooks/useRestaurantList';
 import { useStoreLocations } from '@/features/main-map/hooks/useStoreLocations';
-import { useStoreSearch } from '@/features/main-map/hooks/useStoreSearch';
 import { useFilteredStores } from '@/features/main-map/hooks/useFilteredStores';
 import MyPageModal from '@/features/mypage/components/MyPageModal/MyPageModal';
 import PlaceRequestModal from '@/features/place-request/components/PlaceRequestModal/PlaceRequestModal';
 import { getStoreDetail, getStoreReviews } from '@/features/place-detail/api/placeDetail.api';
 import PlaceDetailModalFlow from '@/features/place-detail/flow/PlaceDetailModalFlow';
 import { getIsStoreOpen } from '@/utils/openingHours';
+import deliciousImg from '@/assets/BobImages/delicious.png';
 import surprisedImg from '@/assets/BobImages/surprised.png';
 
 import styles from './MapScreen.module.css';
@@ -64,6 +64,8 @@ const getEatingLevelRank = (value: string | undefined) => {
   const rank = Number.parseInt(value, 10);
   return Number.isNaN(rank) ? Number.MAX_SAFE_INTEGER : rank;
 };
+
+const normalizeSearchValue = (value: string) => value.replace(/\s+/g, '').toLocaleLowerCase();
 
 const toStoreSummary = (store: {
   storeInfoPK: number;
@@ -180,23 +182,51 @@ export default function MapScreen() {
     isLoading: isLocationsLoading,
     isError: isLocationsError,
   } = useStoreLocations();
-  const {
-    data: searchedStores = [],
-    isFetching: isSearching,
-    isError: isSearchError,
-  } = useStoreSearch(debouncedQuery);
 
-  const baseStores = useMemo(() => {
-    if (debouncedQuery.trim()) return searchedStores;
+  const candidateStores = useMemo(() => {
     if (appliedCategories.length > 0) return filteredStores;
     return stores;
-  }, [appliedCategories.length, debouncedQuery, filteredStores, searchedStores, stores]);
+  }, [appliedCategories.length, filteredStores, stores]);
+
+  const normalizedSearchQuery = useMemo(() => normalizeSearchValue(debouncedQuery.trim()), [debouncedQuery]);
+
+  const searchDetailQueries = useQueries({
+    queries: candidateStores.map((store) => ({
+      queryKey: ['storeSearchDetail', store.storeInfoPK],
+      queryFn: () => getStoreDetail(store.storeInfoPK),
+      enabled: normalizedSearchQuery.length > 0,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const menuMatchedStoreIds = useMemo(() => {
+    if (!normalizedSearchQuery) return new Set<number>();
+
+    return new Set(
+      searchDetailQueries
+        .map((query) => query.data)
+        .filter((detail): detail is NonNullable<typeof detail> => Boolean(detail))
+        .filter((detail) =>
+          detail.menus.some((menu) => normalizeSearchValue(menu.menuName).includes(normalizedSearchQuery)),
+        )
+        .map((detail) => detail.storeInfoPK),
+    );
+  }, [normalizedSearchQuery, searchDetailQueries]);
+
+  const baseStores = useMemo(() => {
+    if (!normalizedSearchQuery) return candidateStores;
+
+    return candidateStores.filter((store) => {
+      const normalizedStoreName = normalizeSearchValue(store.storeName);
+      return normalizedStoreName.includes(normalizedSearchQuery) || menuMatchedStoreIds.has(store.storeInfoPK);
+    });
+  }, [candidateStores, menuMatchedStoreIds, normalizedSearchQuery]);
 
   const baseSummaries = useMemo(() => {
     const summaries = baseStores.map(toStoreSummary);
-    if (!debouncedQuery.trim() || appliedCategories.length === 0) return summaries;
+    if (!normalizedSearchQuery || appliedCategories.length === 0) return summaries;
     return summaries.filter((store) => appliedCategories.includes(store.category));
-  }, [appliedCategories, baseStores, debouncedQuery]);
+  }, [appliedCategories, baseStores, normalizedSearchQuery]);
 
   const sortMetaQueries = useQueries({
     queries: baseSummaries.map((store) => {
@@ -589,9 +619,13 @@ export default function MapScreen() {
 
   const isLoading =
     isStoreListLoading || isLocationsLoading || (appliedCategories.length > 0 && isFilteredStoresLoading);
+  const isSearching =
+    normalizedSearchQuery.length > 0 &&
+    searchDetailQueries.some((query) => query.isLoading || query.isFetching);
   const isSortMetaLoading =
     (appliedSort === 'eatingLevel' || appliedSort === 'reviews') &&
     sortMetaQueries.some((query) => query.isLoading || query.isFetching);
+  const isSearchError = searchDetailQueries.some((query) => query.isError);
   const hasError = isStoreListError || isLocationsError || isSearchError || isFilteredStoresError;
   const handleMarkerClick = (storeId: number) => {
     setSelectedStoreId(storeId);
@@ -601,7 +635,10 @@ export default function MapScreen() {
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <h1 className={styles.title}>홍밥</h1>
+        <div className={styles.brand}>
+          <img src={deliciousImg} alt="" className={styles.brandImage} draggable={false} aria-hidden="true" />
+          <h1 className={styles.title}>홍밥</h1>
+        </div>
       </header>
 
       <div className={styles.mapLayer}>
