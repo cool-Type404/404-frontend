@@ -419,6 +419,13 @@
   background: #ffffff;
 }
 
+.signUpIntroModal {
+  width: min(360px, calc(100vw - 28px));
+  padding: 18px 18px 24px;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
 .loginModal {
   width: min(360px, calc(100vw - 28px));
   padding: 28px 26px 30px;
@@ -438,6 +445,88 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.signUpIntroBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 14px 8px 4px;
+}
+
+.signUpIntroCloseButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #7abf43;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.signUpIntroImage {
+  width: 144px;
+  height: 144px;
+  object-fit: contain;
+  margin-bottom: 14px;
+}
+
+.signUpIntroTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.signUpIntroTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.signUpIntroDescription {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(17, 24, 39, 0.72);
+}
+
+.signUpIntroPrimaryButton {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 16px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.signUpIntroSecondaryButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(17, 24, 39, 0.64);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.signUpIntroSecondaryActions {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .loginBody {
@@ -567,6 +656,13 @@
   color: rgba(0, 0, 0, 0.42);
 }
 
+.signUpHint {
+  margin: 2px 0 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.42);
+}
+
 .signUpInput,
 .signUpSelect {
   width: 100%;
@@ -660,7 +756,45 @@
   color: rgba(0, 0, 0, 0.28);
 }
 
+.signUpConsentTrigger {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  flex-direction: row;
+  white-space: nowrap;
+}
+
+.signUpConsentTriggerError .signUpConsentCheckbox {
+  border-color: #ef6d6d;
+}
+
+.signUpConsentCheckbox {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid #b8c1ad;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.signUpConsentCheckboxChecked {
+  border-color: #6fbf3a;
+  background: #6fbf3a;
+}
+
 .signUpTermsButton {
+  display: inline-flex;
+  align-items: center;
   appearance: none;
   border: 0;
   background: transparent;
@@ -668,6 +802,191 @@
   text-decoration: underline;
   cursor: pointer;
   padding: 0;
+}
+
+.privacyConsentModal {
+  width: min(380px, calc(100vw - 28px));
+  padding: 18px 18px 22px;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.privacyConsentCloseButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #7abf43;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.privacyConsentBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 8px;
+}
+
+.privacyConsentSection {
+  padding: 14px;
+  border-radius: 14px;
+  background: #f5f8f1;
+}
+
+.privacyConsentSectionTitle {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #161616;
+}
+
+.privacyConsentText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.72);
+}
+
+.privacyConsentAgreeButton {
+  appearance: none;
+  border: 0;
+  margin-top: 4px;
+  height: 46px;
+  border-radius: 12px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.eatingLevelModal {
+  width: min(520px, calc(100vw - 28px));
+  padding: 24px 24px 28px;
+  border-radius: 24px;
+  background: #ffffff;
+}
+
+.eatingLevelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 8px;
+}
+
+.eatingLevelGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.eatingLevelCard {
+  appearance: none;
+  border: 2px solid transparent;
+  border-radius: 18px;
+  background: #ececec;
+  min-height: 188px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eatingLevelCard:hover {
+  transform: translateY(-1px);
+}
+
+.eatingLevelCardSelected {
+  border-color: #ff4d4f;
+  background: #fff1f1;
+  box-shadow: 0 12px 22px rgba(255, 77, 79, 0.18);
+}
+
+.eatingLevelImage {
+  width: 82px;
+  height: 82px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.eatingLevelCardTitle {
+  font-size: 16px;
+  font-weight: 900;
+  color: #111111;
+}
+
+.eatingLevelCardSelected .eatingLevelCardTitle {
+  color: #ff2d2f;
+}
+
+.eatingLevelCardDescription {
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(17, 17, 17, 0.78);
+}
+
+.eatingLevelLine {
+  display: block;
+}
+
+.eatingLevelSubmitButton {
+  appearance: none;
+  border: 0;
+  align-self: center;
+  width: min(220px, 100%);
+  height: 50px;
+  border-radius: 14px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.eatingLevelAlertModal {
+  width: min(280px, calc(100vw - 28px));
+  padding: 24px 20px 20px;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.eatingLevelAlertBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.eatingLevelAlertText {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #151515;
+  text-align: center;
+}
+
+.eatingLevelAlertButton {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+  background: #6fbf3a;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .signUpSubmitButton {
@@ -902,6 +1221,43 @@
     padding: 22px 18px 24px;
   }
 
+  .privacyConsentModal {
+    width: calc(100vw - 20px);
+    padding: 16px 16px 20px;
+  }
+
+  .eatingLevelModal {
+    width: calc(100vw - 20px);
+    padding: 20px 16px 22px;
+  }
+
+  .eatingLevelGrid {
+    gap: 14px;
+  }
+
+  .eatingLevelCard {
+    min-height: 174px;
+    padding: 14px 10px;
+  }
+
+  .eatingLevelImage {
+    width: 72px;
+    height: 72px;
+  }
+
+  .eatingLevelCardTitle {
+    font-size: 15px;
+  }
+
+  .eatingLevelCardDescription {
+    font-size: 10px;
+  }
+
+  .signUpIntroModal {
+    width: calc(100vw - 20px);
+    padding: 16px 16px 22px;
+  }
+
   .loginModal {
     width: calc(100vw - 20px);
     padding: 24px 18px;
@@ -936,5 +1292,9 @@
   .signUpSelectRow {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .eatingLevelGrid {
+    grid-template-columns: 1fr;
   }
 }
