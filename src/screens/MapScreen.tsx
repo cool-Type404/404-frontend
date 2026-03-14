@@ -18,8 +18,11 @@ import PlaceRequestModal from '@/features/place-request/components/PlaceRequestM
 import { getStoreDetail, getStoreReviews } from '@/features/place-detail/api/placeDetail.api';
 import PlaceDetailModalFlow from '@/features/place-detail/flow/PlaceDetailModalFlow';
 import { getIsStoreOpen } from '@/utils/openingHours';
+import defaultImg from '@/assets/BobImages/default.png';
 import deliciousImg from '@/assets/BobImages/delicious.png';
+import happyImg from '@/assets/BobImages/happy.png';
 import surprisedImg from '@/assets/BobImages/surprised.png';
+import thinkingImg from '@/assets/BobImages/thinking.png';
 
 import styles from './MapScreen.module.css';
 
@@ -58,6 +61,33 @@ const sortOptions: Array<{ key: SortKey; label: string }> = [
 ];
 
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
+
+const signUpLevelOptions = [
+  {
+    value: '1레벨',
+    title: '레벨 1',
+    description: '혼자 먹는 길이 어색해요!\n분식처럼 빨리 먹을 수 있는\n메뉴가 편해요',
+    image: thinkingImg,
+  },
+  {
+    value: '2레벨',
+    title: '레벨 2',
+    description: '가끔은 혼밥도 괜찮아요!\n부담 덜한 메뉴와 식사는\n혼자도 좋아요',
+    image: defaultImg,
+  },
+  {
+    value: '3레벨',
+    title: '레벨 3',
+    description: '혼밥? 은근히 좋아요!\n고기·파스타도\n혼자서 부담 없이 먹어요',
+    image: deliciousImg,
+  },
+  {
+    value: '4레벨',
+    title: '레벨 4',
+    description: '혼밥은 내 일상이에요!\n혼자 고기도 좋고 술집도\n거리낌 없어요',
+    image: happyImg,
+  },
+] as const;
 
 const getEatingLevelRank = (value: string | undefined) => {
   if (!value) return Number.MAX_SAFE_INTEGER;
@@ -123,7 +153,11 @@ export default function MapScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSignUpIntroOpen, setIsSignUpIntroOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const [isEatingLevelModalOpen, setIsEatingLevelModalOpen] = useState(false);
+  const [isEatingLevelAlertOpen, setIsEatingLevelAlertOpen] = useState(false);
+  const [isPrivacyConsentOpen, setIsPrivacyConsentOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isMyPageOpen, setIsMyPageOpen] = useState(false);
   const [isPlaceRequestOpen, setIsPlaceRequestOpen] = useState(false);
@@ -153,6 +187,7 @@ export default function MapScreen() {
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isPrivacyConsentAgreed, setIsPrivacyConsentAgreed] = useState(false);
   const [signUpMessage, setSignUpMessage] = useState('');
   const [signUpError, setSignUpError] = useState('');
   const [signUpFieldErrors, setSignUpFieldErrors] = useState({
@@ -160,7 +195,7 @@ export default function MapScreen() {
     code: false,
     password: false,
     nickname: false,
-    eatingLevel: false,
+    privacyConsent: false,
   });
 
   useEffect(() => {
@@ -406,14 +441,30 @@ export default function MapScreen() {
 
   const handleOpenSignUp = () => {
     setIsMenuOpen(false);
+    setIsSignUpIntroOpen(true);
+  };
+
+  const handleOpenSignUpForm = () => {
+    setIsSignUpIntroOpen(false);
     setSignUpMessage('');
     setSignUpError('');
-    setSignUpFieldErrors({ email: false, code: false, password: false, nickname: false, eatingLevel: false });
+    setIsPrivacyConsentAgreed(false);
+    setSignUpFieldErrors({
+      email: false,
+      code: false,
+      password: false,
+      nickname: false,
+      privacyConsent: false,
+    });
+    setSignUpEatingLevel('');
+    setIsEatingLevelModalOpen(false);
+    setIsEatingLevelAlertOpen(false);
     setIsSignUpOpen(true);
   };
 
   const handleOpenLogin = () => {
     setIsMenuOpen(false);
+    setIsSignUpIntroOpen(false);
     setLoginError('');
     setIsLoginOpen(true);
   };
@@ -444,8 +495,29 @@ export default function MapScreen() {
 
   const handleCloseSignUp = () => {
     setIsSignUpOpen(false);
+    setIsEatingLevelModalOpen(false);
+    setIsEatingLevelAlertOpen(false);
+    setIsPrivacyConsentOpen(false);
+    setIsPrivacyConsentAgreed(false);
+    setSignUpEatingLevel('');
     setShowSignUpPassword(false);
-    setSignUpFieldErrors({ email: false, code: false, password: false, nickname: false, eatingLevel: false });
+    setSignUpFieldErrors({
+      email: false,
+      code: false,
+      password: false,
+      nickname: false,
+      privacyConsent: false,
+    });
+  };
+
+  const handleOpenPrivacyConsent = () => {
+    setIsPrivacyConsentOpen(true);
+  };
+
+  const handleAgreePrivacyConsent = () => {
+    setIsPrivacyConsentAgreed(true);
+    setSignUpFieldErrors((prev) => ({ ...prev, privacyConsent: false }));
+    setIsPrivacyConsentOpen(false);
   };
 
   const handleSendVerification = async () => {
@@ -505,19 +577,30 @@ export default function MapScreen() {
     }
   };
 
-  const handleSubmitSignUp = async () => {
+  const handleSubmitSignUp = () => {
     const requiredFieldErrors = {
       email: !signUpEmail.trim(),
       code: !signUpCode.trim(),
       password: !signUpPassword.trim(),
       nickname: !signUpNickname.trim(),
-      eatingLevel: !signUpEatingLevel,
+      privacyConsent: !isPrivacyConsentAgreed,
     };
 
     setSignUpFieldErrors(requiredFieldErrors);
 
-    if (!signUpEmail.trim() || !signUpCode.trim() || !signUpPassword.trim() || !signUpNickname.trim() || !signUpEatingLevel) {
+    if (
+      !signUpEmail.trim() ||
+      !signUpCode.trim() ||
+      !signUpPassword.trim() ||
+      !signUpNickname.trim()
+    ) {
       setSignUpError('필수 항목을 모두 입력해 주세요.');
+      setSignUpMessage('');
+      return;
+    }
+
+    if (!isPrivacyConsentAgreed) {
+      setSignUpError('개인정보 동의를 완료해 주세요.');
       setSignUpMessage('');
       return;
     }
@@ -546,19 +629,51 @@ export default function MapScreen() {
       return;
     }
 
+    setSignUpError('');
+    setSignUpMessage('');
+    setIsEatingLevelModalOpen(true);
+  };
+
+  const handleCompleteSignUp = async () => {
+    if (!signUpEatingLevel) {
+      setIsEatingLevelAlertOpen(true);
+      return;
+    }
+
     try {
       setIsSigningUp(true);
       setSignUpError('');
       setSignUpMessage('');
+      const nextEmail = signUpEmail.trim();
+      const nextPassword = signUpPassword;
+
       await signUp({
-        email: signUpEmail.trim(),
-        password: signUpPassword,
+        email: nextEmail,
+        password: nextPassword,
         nickname: signUpNickname.trim(),
         gender: signUpGender || undefined,
         age: signUpAge || undefined,
         eatingLevel: signUpEatingLevel,
       });
-      setSignUpMessage('회원가입이 완료되었습니다.');
+      setSignUpMessage('회원가입이 완료되었습니다. 로그인 중입니다.');
+
+      try {
+        const loginResponse = await login({ email: nextEmail, password: nextPassword });
+        window.localStorage.setItem('accessToken', loginResponse.accessToken);
+        window.localStorage.setItem('refreshToken', loginResponse.refreshToken);
+        window.localStorage.setItem('loginEmail', loginResponse.email);
+        setIsLoggedIn(true);
+        setIsLoginOpen(false);
+        setLoginEmail('');
+        setLoginPassword('');
+        setShowLoginPassword(false);
+      } catch {
+        setLoginEmail(nextEmail);
+        setLoginPassword('');
+        setLoginError('회원가입은 완료되었습니다. 로그인 후 이용해 주세요.');
+        setIsLoginOpen(true);
+      }
+
       setSignUpCode('');
       setSignUpPassword('');
       setSignUpNickname('');
@@ -566,8 +681,16 @@ export default function MapScreen() {
       setSignUpAge('');
       setSignUpEatingLevel('');
       setIsEmailVerified(false);
+      setIsPrivacyConsentAgreed(false);
+      setIsEatingLevelModalOpen(false);
       setShowSignUpPassword(false);
-      setSignUpFieldErrors({ email: false, code: false, password: false, nickname: false, eatingLevel: false });
+      setSignUpFieldErrors({
+        email: false,
+        code: false,
+        password: false,
+        nickname: false,
+        privacyConsent: false,
+      });
       window.setTimeout(() => setIsSignUpOpen(false), 600);
     } catch (error) {
       setSignUpError(error instanceof Error ? error.message : '회원가입에 실패했습니다.');
@@ -945,6 +1068,55 @@ export default function MapScreen() {
         </form>
       </Modal>
 
+      <Modal
+        open={isSignUpIntroOpen}
+        onClose={() => setIsSignUpIntroOpen(false)}
+        closeOnOverlayClick
+        className={styles.signUpIntroModal}
+        headerRight={
+          <button
+            type="button"
+            className={styles.signUpIntroCloseButton}
+            aria-label="회원가입 안내 닫기"
+            onClick={() => setIsSignUpIntroOpen(false)}
+          >
+            <CommonIcon name="crossclose" size={20} />
+          </button>
+        }
+      >
+        <div className={styles.signUpIntroBody}>
+          <img
+            src={happyImg}
+            alt=""
+            className={styles.signUpIntroImage}
+            draggable={false}
+            aria-hidden="true"
+          />
+
+          <div className={styles.signUpIntroTextGroup}>
+            <h2 className={styles.signUpIntroTitle}>첫 방문이신가요?</h2>
+            <p className={styles.signUpIntroDescription}>계정을 생성하여 서비스를 이용해보세요!</p>
+          </div>
+
+          <button type="button" className={styles.signUpIntroPrimaryButton} onClick={handleOpenSignUpForm}>
+            계정 생성하기
+          </button>
+
+          <div className={styles.signUpIntroSecondaryActions}>
+            <button type="button" className={styles.signUpIntroSecondaryButton} onClick={handleOpenLogin}>
+              이미 계정이 있다면?
+            </button>
+            <button
+              type="button"
+              className={styles.signUpIntroSecondaryButton}
+              onClick={() => setIsSignUpIntroOpen(false)}
+            >
+              로그인 없이 둘러보기
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <Modal open={isSignUpOpen} onClose={handleCloseSignUp} closeOnOverlayClick className={styles.signUpModal}>
         <div className={styles.signUpBody}>
           <h2 className={styles.signUpTitle}>계정 생성하기</h2>
@@ -1010,6 +1182,7 @@ export default function MapScreen() {
                 <CommonIcon name={showSignUpPassword ? 'passwordopen' : 'passwordhide'} size={16} />
               </button>
             </div>
+            <p className={styles.signUpHint}>영문대문자 + 소문자 + 숫자 + 특수문자</p>
           </div>
 
           <div className={styles.signUpField}>
@@ -1052,28 +1225,20 @@ export default function MapScreen() {
             </div>
           </div>
 
-          <div className={styles.signUpField}>
-            <label className={styles.signUpLabel}>혼밥 레벨</label>
-            <select
-              className={`${styles.signUpSelect} ${signUpFieldErrors.eatingLevel ? styles.signUpInputError : ''}`}
-              value={signUpEatingLevel}
-              onChange={(event) => {
-                setSignUpEatingLevel(event.target.value);
-                setSignUpFieldErrors((prev) => ({ ...prev, eatingLevel: false }));
-              }}
-            >
-              <option value="">선택</option>
-              <option value="1레벨">1레벨</option>
-              <option value="2레벨">2레벨</option>
-              <option value="3레벨">3레벨</option>
-              <option value="4레벨">4레벨</option>
-            </select>
-          </div>
-
           <div className={styles.signUpMetaRow}>
             <span className={styles.signUpMetaMuted}>완료 확인</span>
-            <button type="button" className={styles.signUpTermsButton}>
-              개인정보 동의
+            <button
+              type="button"
+              className={`${styles.signUpConsentTrigger} ${signUpFieldErrors.privacyConsent ? styles.signUpConsentTriggerError : ''}`}
+              onClick={handleOpenPrivacyConsent}
+            >
+              <span className={styles.signUpTermsButton}>개인정보 동의</span>
+              <span
+                className={`${styles.signUpConsentCheckbox} ${isPrivacyConsentAgreed ? styles.signUpConsentCheckboxChecked : ''}`}
+                aria-hidden="true"
+              >
+                {isPrivacyConsentAgreed ? <CommonIcon name="check" size={12} /> : null}
+              </span>
             </button>
           </div>
 
@@ -1082,6 +1247,51 @@ export default function MapScreen() {
 
           <button type="button" className={styles.signUpSubmitButton} onClick={handleSubmitSignUp} disabled={isSigningUp}>
             {isSigningUp ? '가입 중...' : '회원가입'}
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isPrivacyConsentOpen}
+        onClose={() => setIsPrivacyConsentOpen(false)}
+        closeOnOverlayClick
+        className={styles.privacyConsentModal}
+        title="개인정보 동의"
+        headerRight={
+          <button
+            type="button"
+            className={styles.privacyConsentCloseButton}
+            aria-label="개인정보 동의 닫기"
+            onClick={() => setIsPrivacyConsentOpen(false)}
+          >
+            <CommonIcon name="crossclose" size={20} />
+          </button>
+        }
+      >
+        <div className={styles.privacyConsentBody}>
+          <div className={styles.privacyConsentSection}>
+            <h3 className={styles.privacyConsentSectionTitle}>수집 항목</h3>
+            <p className={styles.privacyConsentText}>
+              이메일, 비밀번호, 닉네임, 성별, 나이대, 혼밥 레벨 정보를 회원가입 및 서비스 제공을 위해 수집합니다.
+            </p>
+          </div>
+
+          <div className={styles.privacyConsentSection}>
+            <h3 className={styles.privacyConsentSectionTitle}>이용 목적</h3>
+            <p className={styles.privacyConsentText}>
+              회원 식별, 계정 관리, 맞춤형 서비스 제공 및 이용 기록 관리에 활용됩니다.
+            </p>
+          </div>
+
+          <div className={styles.privacyConsentSection}>
+            <h3 className={styles.privacyConsentSectionTitle}>보관 기간</h3>
+            <p className={styles.privacyConsentText}>
+              회원 탈퇴 시까지 보관하며, 관련 법령에 따라 필요한 경우 일정 기간 추가 보관될 수 있습니다.
+            </p>
+          </div>
+
+          <button type="button" className={styles.privacyConsentAgreeButton} onClick={handleAgreePrivacyConsent}>
+            최종 동의
           </button>
         </div>
       </Modal>
@@ -1149,6 +1359,70 @@ export default function MapScreen() {
               적용
             </button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isEatingLevelModalOpen}
+        onClose={() => setIsEatingLevelModalOpen(false)}
+        closeOnOverlayClick
+        className={styles.eatingLevelModal}
+        title="혼밥 레벨 확인"
+      >
+        <div className={styles.eatingLevelBody}>
+          <div className={styles.eatingLevelGrid}>
+            {signUpLevelOptions.map((option) => {
+              const isSelected = signUpEatingLevel === option.value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`${styles.eatingLevelCard} ${isSelected ? styles.eatingLevelCardSelected : ''}`}
+                  onClick={() => setSignUpEatingLevel(option.value)}
+                >
+                  <img src={option.image} alt="" className={styles.eatingLevelImage} draggable={false} aria-hidden="true" />
+                  <strong className={styles.eatingLevelCardTitle}>{option.title}</strong>
+                  <p className={styles.eatingLevelCardDescription}>
+                    {option.description.split('\n').map((line) => (
+                      <span key={`${option.value}-${line}`} className={styles.eatingLevelLine}>
+                        {line}
+                      </span>
+                    ))}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            className={styles.eatingLevelSubmitButton}
+            onClick={() => {
+              void handleCompleteSignUp();
+            }}
+            disabled={isSigningUp}
+          >
+            {isSigningUp ? '가입 중...' : '시작하기'}
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isEatingLevelAlertOpen}
+        onClose={() => setIsEatingLevelAlertOpen(false)}
+        closeOnOverlayClick
+        className={styles.eatingLevelAlertModal}
+      >
+        <div className={styles.eatingLevelAlertBody}>
+          <p className={styles.eatingLevelAlertText}>혼밥 레벨을 선택해 주세요.</p>
+          <button
+            type="button"
+            className={styles.eatingLevelAlertButton}
+            onClick={() => setIsEatingLevelAlertOpen(false)}
+          >
+            확인
+          </button>
         </div>
       </Modal>
     </div>
