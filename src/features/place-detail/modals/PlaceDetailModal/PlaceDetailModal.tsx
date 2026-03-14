@@ -23,7 +23,7 @@ type Props = {
   place: PlaceDetail;
   onMoreReviews: () => void;
   onWriteReview: () => void;
-  onBookmarkToggle?: (isCurrentlyBookmarked: boolean) => void;
+  onBookmarkToggle?: (isCurrentlyBookmarked: boolean) => boolean | void;
   onToggleLike?: (reviewId: string | number) => void;
   onDeleteReview?: (reviewId: string | number) => void;
 };
@@ -59,7 +59,8 @@ export default function PlaceDetailModal({
   }, [open, place.bookmarked]);
 
   const handleBookmarkClick = useCallback(() => {
-    onBookmarkToggle?.(bookmarked);
+    const shouldToggle = onBookmarkToggle?.(bookmarked);
+    if (shouldToggle === false) return;
     setBookmarked((v) => !v);
   }, [bookmarked, onBookmarkToggle]);
 
