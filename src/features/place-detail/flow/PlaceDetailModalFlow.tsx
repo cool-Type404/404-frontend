@@ -162,26 +162,32 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
   const handleBookmarkToggle = useCallback(
     (isCurrentlyBookmarked: boolean) => {
       if (!isAuthenticated) {
-        window.alert('로그인 후 북마크를 사용할 수 있습니다.');
-        return;
+        window.alert('로그인 후 북마크를 이용할 수 있습니다.');
+        return false;
       }
 
       if (isCurrentlyBookmarked) {
         removeBookmark.mutate(undefined, {
           onSuccess: () => setIsBookmarked(false),
         });
-        return;
+        return true;
       }
 
       addBookmark.mutate(undefined, {
         onSuccess: () => setIsBookmarked(true),
       });
+      return true;
     },
     [addBookmark, isAuthenticated, removeBookmark],
   );
 
   const handleToggleLike = useCallback(
     (reviewId: string | number) => {
+      if (!isAuthenticated) {
+        window.alert('로그인 후 리뷰 좋아요를 누를 수 있습니다.');
+        return;
+      }
+
       const id = Number(reviewId);
       const review = reviewsState.find((item) => item.review_id === reviewId);
       if (!review) return;
@@ -204,7 +210,7 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
         like.mutate(id);
       }
     },
-    [like, reviewsState, unlike],
+    [isAuthenticated, like, reviewsState, unlike],
   );
 
   const handleDeleteReview = useCallback(
@@ -241,7 +247,7 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
   );
 
   if (!open || storeIdNum == null) return null;
-  if (isDetailLoading) return <div>로딩 중..</div>;
+  if (isDetailLoading) return <div>로딩 중.</div>;
   if (!place) return null;
 
   const deleteBlockedModal = (

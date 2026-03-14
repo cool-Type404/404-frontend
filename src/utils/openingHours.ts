@@ -59,27 +59,89 @@ export function isClosedAllDay(openingHour: OpeningHourLike): boolean {
   return toMinutes(openingHour.start_time) == null || toMinutes(openingHour.end_time) == null;
 }
 
-export function getIsStoreOpen(openingHours: OpeningHourLike[], now = new Date()): boolean {
-  const todayHours = openingHours.find((openingHour) => dayMap[openingHour.days] === now.getDay());
-  if (!todayHours || isClosedAllDay(todayHours)) return false;
+function isOvernightHours(startMinutes: number, endMinutes: number): boolean {
+  return endMinutes <= startMinutes;
+}
 
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const startMinutes = toMinutes(todayHours.start_time);
-  const endMinutes = toMinutes(todayHours.end_time);
-  const breakStartMinutes = toMinutes(todayHours.break_start_time);
-  const breakEndMinutes = toMinutes(todayHours.break_end_time);
+function toInterval(
+  startMinutes: number,
+  endMinutes: number,
+  referenceStartMinutes = 0,
+): [number, number] {
+  const normalizedStart = startMinutes + referenceStartMinutes;
+  const normalizedEnd =
+    endMinutes + referenceStartMinutes + (isOvernightHours(startMinutes, endMinutes) ? 24 * 60 : 0);
+
+  return [normalizedStart, normalizedEnd];
+}
+
+function toBreakInterval(
+  breakStartMinutes: number,
+  breakEndMinutes: number,
+  startMinutes: number,
+  endMinutes: number,
+  referenceStartMinutes = 0,
+): [number, number] {
+  const isStoreOvernight = isOvernightHours(startMinutes, endMinutes);
+  const breakStartsNextDay = isStoreOvernight && breakStartMinutes < startMinutes;
+  const breakReferenceStart = referenceStartMinutes + (breakStartsNextDay ? 24 * 60 : 0);
+
+  return toInterval(breakStartMinutes, breakEndMinutes, breakReferenceStart);
+}
+
+function isOpenAtMinutes(
+  openingHour: OpeningHourLike,
+  currentMinutes: number,
+  referenceStartMinutes = 0,
+): boolean {
+  const startMinutes = toMinutes(openingHour.start_time);
+  const endMinutes = toMinutes(openingHour.end_time);
+  const breakStartMinutes = toMinutes(openingHour.break_start_time);
+  const breakEndMinutes = toMinutes(openingHour.break_end_time);
 
   if (startMinutes == null || endMinutes == null) return false;
-  if (currentMinutes < startMinutes || currentMinutes >= endMinutes) return false;
 
-  if (
-    breakStartMinutes != null &&
-    breakEndMinutes != null &&
-    currentMinutes >= breakStartMinutes &&
-    currentMinutes < breakEndMinutes
-  ) {
-    return false;
+  const [openStart, openEnd] = toInterval(startMinutes, endMinutes, referenceStartMinutes);
+  if (currentMinutes < openStart || currentMinutes >= openEnd) return false;
+
+  if (breakStartMinutes != null && breakEndMinutes != null) {
+    const [breakStart, breakEnd] = toBreakInterval(
+      breakStartMinutes,
+      breakEndMinutes,
+      startMinutes,
+      endMinutes,
+      referenceStartMinutes,
+    );
+
+    if (currentMinutes >= breakStart && currentMinutes < breakEnd) {
+      return false;
+    }
   }
 
   return true;
+}
+
+export function getIsStoreOpen(openingHours: OpeningHourLike[], now = new Date()): boolean {
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const today = now.getDay();
+  const previousDay = (today + 6) % 7;
+
+  const todayHours = openingHours.filter((openingHour) => dayMap[openingHour.days] === today);
+  const previousDayHours = openingHours.filter((openingHour) => dayMap[openingHour.days] === previousDay);
+
+  const isOpenToday = todayHours.some(
+    (openingHour) => !isClosedAllDay(openingHour) && isOpenAtMinutes(openingHour, currentMinutes),
+  );
+
+  if (isOpenToday) return true;
+
+  return previousDayHours.some((openingHour) => {
+    if (isClosedAllDay(openingHour)) return false;
+
+    const startMinutes = toMinutes(openingHour.start_time);
+    const endMinutes = toMinutes(openingHour.end_time);
+    if (startMinutes == null || endMinutes == null || !isOvernightHours(startMinutes, endMinutes)) return false;
+
+    return isOpenAtMinutes(openingHour, currentMinutes + 24 * 60);
+  });
 }
