@@ -47,7 +47,7 @@ export interface Review {
   reviewRating: number;
   createdAt: string;
   hashtags?: Array<Hashtag | string>;
-  reviewImages?: Array<ReviewImage | string>;
+  reviewImages?: string[];
   likeCount?: number;
   isLiked?: boolean;
 }
@@ -55,10 +55,6 @@ export interface Review {
 export interface Hashtag {
   hashtagId: number;
   hashtagName: string;
-}
-
-export interface ReviewImage {
-  reviewImgId: number;
 }
 
 export interface WriteReviewRequest {
@@ -140,9 +136,7 @@ export const postReview = async (storeId: number, body: WriteReviewRequest): Pro
     );
     body.images?.forEach((img) => formData.append('images', img));
 
-    await http.post(`/api/stores/${storeId}/reviews`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    await http.post(`/api/stores/${storeId}/reviews`, formData);
   } catch (error) {
     throw parseApiError(error);
   }

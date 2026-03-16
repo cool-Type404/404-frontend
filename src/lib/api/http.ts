@@ -3,7 +3,6 @@ import { getApiBaseUrl } from '@/utils/assetUrl';
 
 export const http = axios.create({
   baseURL: getApiBaseUrl(),
-  headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
 

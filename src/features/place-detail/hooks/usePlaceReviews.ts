@@ -6,5 +6,6 @@ export const usePlaceReviews = (storeId: number) => {
     queryKey: ['placeReviews', storeId],
     queryFn: () => getStoreReviews(storeId),
     enabled: !!storeId,
+    staleTime: 1000 * 60 * 5,
   });
 };
