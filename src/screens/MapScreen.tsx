@@ -1221,10 +1221,10 @@ export default function MapScreen() {
               <button
                 type="button"
                 className={styles.emailCheckButton}
-                onClick={handleVerifyCode}
-                disabled={isVerifyingCode || isEmailVerified}
+                onClick={handleSendVerification}
+                disabled={isSendingCode}
               >
-                {isEmailVerified ? '인증완료' : isVerifyingCode ? '확인 중...' : '확인'}
+                {isSendingCode ? '전송 중...' : '인증'}
               </button>
             </div>
           </div>
@@ -1239,7 +1239,7 @@ export default function MapScreen() {
                 onChange={(event) => {
                   setSignUpCode(event.target.value);
                   if (isEmailVerified) {
-                    setIsEmailVerified(false); // isEmailVerifiedRef 없이 그냥 이걸로!
+                    setIsEmailVerified(false);
                   }
                   setSignUpFieldErrors((prev) => ({ ...prev, code: false }));
                 }}
@@ -1248,10 +1248,10 @@ export default function MapScreen() {
               <button
                 type="button"
                 className={styles.emailCheckButton}
-                onClick={handleSendVerification}
-                disabled={isSendingCode}
+                onClick={handleVerifyCode} 
+                disabled={isVerifyingCode || isEmailVerified}
               >
-                {isSendingCode ? '전송 중...' : '인증'}
+                {isEmailVerified ? '인증완료' : isVerifyingCode ? '확인 중...' : '확인'} // ← 변경
               </button>
             </div>
           </div>
