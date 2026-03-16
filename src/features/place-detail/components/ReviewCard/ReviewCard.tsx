@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { toApiAssetUrl } from '@/utils/assetUrl';
+import { useReviewImage } from '@/features/place-detail/hooks/useReviewImage';
 
 import Chip from '@/components/Chip/Chip';
 import { CommonIcon } from '@/components/CommonIcon/CommonIcon';
@@ -39,6 +39,7 @@ export default function ReviewCard({
 }: ReviewCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const resolvedImageUrl = useReviewImage(imageUrl);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -62,7 +63,7 @@ export default function ReviewCard({
   const stars = Array.from({ length: 5 }, (_, i) => (i < filled ? 'starfilled' : 'starline'));
 
   const showTags = (tags?.length ?? 0) > 0;
-  const showImage = Boolean(imageUrl);
+  const showImage = Boolean(resolvedImageUrl);
   const showContent = Boolean(content && content.trim().length > 0);
 
   const handleLike = () => onToggleLike?.(id);
@@ -121,7 +122,7 @@ export default function ReviewCard({
       {showImage ? (
         <div className={styles.imageWrap}>
           <img
-            src={toApiAssetUrl(imageUrl)}
+            src={resolvedImageUrl!}
             alt="리뷰 이미지"
             className={styles.image}
             draggable={false}
