@@ -1251,7 +1251,7 @@ export default function MapScreen() {
                 onClick={handleVerifyCode} 
                 disabled={isVerifyingCode || isEmailVerified}
               >
-                {isEmailVerified ? '인증완료' : isVerifyingCode ? '확인 중...' : '확인'} // ← 변경
+                {isEmailVerified ? '인증완료' : isVerifyingCode ? '확인 중...' : '확인'}
               </button>
             </div>
           </div>
