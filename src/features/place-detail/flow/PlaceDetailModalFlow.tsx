@@ -138,9 +138,9 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
         hashtag_name: typeof hashtag === 'string' ? hashtag : hashtag.hashtagName,
       })),
       review_images: (review.reviewImages ?? []).map((image, index) => ({
-        review_img_id: typeof image === 'string' ? `${review.reviewId}-img-${index}` : image.reviewImgId,
+        review_img_id: `${review.reviewId}-img-${index}`,
         review_id: review.reviewId,
-        review_img_path: typeof image === 'string' ? image : null,
+        review_img_path: image,
       })),
     }));
 
