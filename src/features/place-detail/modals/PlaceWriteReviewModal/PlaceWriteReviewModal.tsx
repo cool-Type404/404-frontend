@@ -31,6 +31,41 @@ type Props = {
 const MAX_HASHTAGS = 3;
 const MAX_IMAGES = 3;
 
+// 압축 함수 추가 (컴포넌트 밖에)
+const compressImage = (file: File, maxWidth = 1024, quality = 0.7): Promise<File> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const scale = Math.min(1, maxWidth / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return resolve(file); // 실패시 원본 사용
+          resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+        },
+        'image/jpeg',
+        quality,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file); // 실패시 원본 사용
+    };
+
+    img.src = url;
+  });
+};
+
 export default function PlaceWriteReviewModal({
   open,
   onClose,
@@ -84,16 +119,14 @@ export default function PlaceWriteReviewModal({
     fileInputRef.current?.click();
   }, []);
 
-  const handleFilesChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []);
+const handleFilesChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const files = Array.from(event.target.files ?? []);
+  if (files.length === 0) return;
 
-    if (files.length === 0) {
-      return;
-    }
-
-    setImages((prev) => [...prev, ...files].slice(0, MAX_IMAGES));
-    event.target.value = '';
-  }, []);
+  const compressed = await Promise.all(files.map((file) => compressImage(file)));
+  setImages((prev) => [...prev, ...compressed].slice(0, MAX_IMAGES));
+  event.target.value = '';
+}, []);
 
   const handleSubmit = useCallback(() => {
     if (rating < 1) {

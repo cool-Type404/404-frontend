@@ -39,7 +39,7 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
   const { data: detailData, isLoading: isDetailLoading } = usePlaceDetail(storeIdNum ?? 0);
   const { data: reviewsData } = usePlaceReviews(storeIdNum ?? 0);
   const { addBookmark, removeBookmark } = useBookmark(storeIdNum ?? 0);
-  const { like, unlike } = useReviewLike(storeIdNum ?? 0);
+  const { like, unlike } = useReviewLike();
   const writeReview = useWriteReview(storeIdNum ?? 0);
   const deleteReviewMutation = useDeleteReview(storeIdNum ?? 0);
 
@@ -112,7 +112,6 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
 
   useEffect(() => {
     if (!open) return;
-
     setView('detail');
     setIsDeleteBlockedOpen(false);
 
@@ -145,7 +144,8 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
     }));
 
     setReviewsState(converted);
-  }, [currentNickname, isAuthenticated, open, reviewsData, storeIdNum]);
+  }, [currentNickname, isAuthenticated, reviewsData, storeIdNum]);
+  //open 의존성 제거! storeId나 reviewsData가 바뀔 때만 재세팅
 
   const handleMoreReviews = useCallback(() => setView('reviews'), []);
   const handleBack = useCallback(() => setView('detail'), []);

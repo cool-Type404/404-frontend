@@ -9,7 +9,13 @@ import Chip from '../components/Chip/Chip';
 import Modal from '../components/Modal/Modal';
 import { CommonIcon } from '../components/CommonIcon/CommonIcon';
 import { FoodCategoryIcon } from '@/components/FoodCategoryIcon';
-import { login, logout, sendVerificationEmail, signUp, verifyEmailCode } from '@/features/auth/api/auth.api';
+import {
+  login,
+  logout,
+  sendVerificationEmail,
+  signUp,
+  verifyEmailCode,
+} from '@/features/auth/api/auth.api';
 import { useRestaurantList } from '@/features/main-map/hooks/useRestaurantList';
 import { useStoreLocations } from '@/features/main-map/hooks/useStoreLocations';
 import { useFilteredStores } from '@/features/main-map/hooks/useFilteredStores';
@@ -42,7 +48,15 @@ type CategoryOption = {
   value: StoreCategory;
 };
 
-type FoodCategory = 'korean' | 'japanese' | 'western' | 'chinese' | 'asian' | 'cafe' | 'bunsik' | 'etc';
+type FoodCategory =
+  | 'korean'
+  | 'japanese'
+  | 'western'
+  | 'chinese'
+  | 'asian'
+  | 'cafe'
+  | 'bunsik'
+  | 'etc';
 
 const categoryOptions: CategoryOption[] = [
   { label: '한식', value: 'KOREAN' },
@@ -223,7 +237,10 @@ export default function MapScreen() {
     return stores;
   }, [appliedCategories.length, filteredStores, stores]);
 
-  const normalizedSearchQuery = useMemo(() => normalizeSearchValue(debouncedQuery.trim()), [debouncedQuery]);
+  const normalizedSearchQuery = useMemo(
+    () => normalizeSearchValue(debouncedQuery.trim()),
+    [debouncedQuery],
+  );
 
   const searchDetailQueries = useQueries({
     queries: candidateStores.map((store) => ({
@@ -242,7 +259,9 @@ export default function MapScreen() {
         .map((query) => query.data)
         .filter((detail): detail is NonNullable<typeof detail> => Boolean(detail))
         .filter((detail) =>
-          detail.menus.some((menu) => normalizeSearchValue(menu.menuName).includes(normalizedSearchQuery)),
+          detail.menus.some((menu) =>
+            normalizeSearchValue(menu.menuName).includes(normalizedSearchQuery),
+          ),
         )
         .map((detail) => detail.storeInfoPK),
     );
@@ -253,7 +272,10 @@ export default function MapScreen() {
 
     return candidateStores.filter((store) => {
       const normalizedStoreName = normalizeSearchValue(store.storeName);
-      return normalizedStoreName.includes(normalizedSearchQuery) || menuMatchedStoreIds.has(store.storeInfoPK);
+      return (
+        normalizedStoreName.includes(normalizedSearchQuery) ||
+        menuMatchedStoreIds.has(store.storeInfoPK)
+      );
     });
   }, [candidateStores, menuMatchedStoreIds, normalizedSearchQuery]);
 
@@ -300,9 +322,8 @@ export default function MapScreen() {
       new Map(
         sortMetaQueries
           .map((query) => query.data)
-          .filter(
-            (item): item is { storeId: number; eatingLevel: string } =>
-              Boolean(item && 'eatingLevel' in item && typeof item.eatingLevel === 'string'),
+          .filter((item): item is { storeId: number; eatingLevel: string } =>
+            Boolean(item && 'eatingLevel' in item && typeof item.eatingLevel === 'string'),
           )
           .map((item) => [item.storeId, item.eatingLevel]),
       ),
@@ -314,9 +335,8 @@ export default function MapScreen() {
       new Map(
         sortMetaQueries
           .map((query) => query.data)
-          .filter(
-            (item): item is { storeId: number; reviewCount: number } =>
-              Boolean(item && 'reviewCount' in item && typeof item.reviewCount === 'number'),
+          .filter((item): item is { storeId: number; reviewCount: number } =>
+            Boolean(item && 'reviewCount' in item && typeof item.reviewCount === 'number'),
           )
           .map((item) => [item.storeId, item.reviewCount]),
       ),
@@ -350,9 +370,8 @@ export default function MapScreen() {
       new Map(
         openStatusQueries
           .map((query) => query.data)
-          .filter(
-            (item): item is { storeId: number; isOpen: boolean } =>
-              Boolean(item && 'isOpen' in item && typeof item.isOpen === 'boolean'),
+          .filter((item): item is { storeId: number; isOpen: boolean } =>
+            Boolean(item && 'isOpen' in item && typeof item.isOpen === 'boolean'),
           )
           .map((item) => [item.storeId, item.isOpen]),
       ),
@@ -369,7 +388,8 @@ export default function MapScreen() {
       case 'eatingLevel':
         copied.sort(
           (a, b) =>
-            getEatingLevelRank(eatingLevelMap.get(a.id)) - getEatingLevelRank(eatingLevelMap.get(b.id)),
+            getEatingLevelRank(eatingLevelMap.get(a.id)) -
+            getEatingLevelRank(eatingLevelMap.get(b.id)),
         );
         break;
       case 'reviews':
@@ -424,7 +444,9 @@ export default function MapScreen() {
 
   const handleToggleDraftCategory = (category: StoreCategory) => {
     setDraftCategories((current) =>
-      current.includes(category) ? current.filter((value) => value !== category) : [...current, category],
+      current.includes(category)
+        ? current.filter((value) => value !== category)
+        : [...current, category],
     );
   };
 
@@ -544,6 +566,9 @@ export default function MapScreen() {
   };
 
   const handleVerifyCode = async () => {
+    // 이미 인증됐으면 다시 호출 안 함!
+    if (isEmailVerified) return;
+
     if (!signUpEmail.trim() || !signUpCode.trim()) {
       setSignUpFieldErrors((prev) => ({
         ...prev,
@@ -611,7 +636,11 @@ export default function MapScreen() {
       return;
     }
 
-    if (signUpPassword.length < 8 || signUpPassword.length > 20 || !passwordPattern.test(signUpPassword)) {
+    if (
+      signUpPassword.length < 8 ||
+      signUpPassword.length > 20 ||
+      !passwordPattern.test(signUpPassword)
+    ) {
       setSignUpError('비밀번호는 8~20자이며 영문 대소문자, 숫자, 특수문자를 모두 포함해야 합니다.');
       setSignUpMessage('');
       return;
@@ -741,7 +770,9 @@ export default function MapScreen() {
   };
 
   const isLoading =
-    isStoreListLoading || isLocationsLoading || (appliedCategories.length > 0 && isFilteredStoresLoading);
+    isStoreListLoading ||
+    isLocationsLoading ||
+    (appliedCategories.length > 0 && isFilteredStoresLoading);
   const isSearching =
     normalizedSearchQuery.length > 0 &&
     searchDetailQueries.some((query) => query.isLoading || query.isFetching);
@@ -759,7 +790,13 @@ export default function MapScreen() {
     <div className={styles.root}>
       <header className={styles.header}>
         <div className={styles.brand}>
-          <img src={deliciousImg} alt="" className={styles.brandImage} draggable={false} aria-hidden="true" />
+          <img
+            src={deliciousImg}
+            alt=""
+            className={styles.brandImage}
+            draggable={false}
+            aria-hidden="true"
+          />
           <h1 className={styles.title}>홍밥</h1>
         </div>
       </header>
@@ -784,7 +821,14 @@ export default function MapScreen() {
       </div>
 
       <div className={styles.topCenter}>
-        <Button variant="third" height={44} radius={16} className={styles.filterButton} aria-label="필터" onClick={handleOpenFilter}>
+        <Button
+          variant="third"
+          height={44}
+          radius={16}
+          className={styles.filterButton}
+          aria-label="필터"
+          onClick={handleOpenFilter}
+        >
           <span className={styles.inlineIcon}>
             <CommonIcon name="filter" size={20} className={styles.filterIcon} />
           </span>
@@ -804,7 +848,9 @@ export default function MapScreen() {
           />
         </div>
 
-        {hasError ? <div className={styles.feedbackCard}>식당 정보를 불러오지 못했습니다.</div> : null}
+        {hasError ? (
+          <div className={styles.feedbackCard}>식당 정보를 불러오지 못했습니다.</div>
+        ) : null}
 
         <div className={styles.list}>
           {isLoading || isSearching || isSortMetaLoading ? (
@@ -836,7 +882,9 @@ export default function MapScreen() {
                         <span className={styles.storeName}>{store.name}</span>
                       </div>
                       <div className={styles.storeMeta}>
-                        <span className={styles.metaText}>{foodCategoryLabel(toFoodCategory(store.category))}</span>
+                        <span className={styles.metaText}>
+                          {foodCategoryLabel(toFoodCategory(store.category))}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -925,7 +973,11 @@ export default function MapScreen() {
             삭제된 정보는 복구할 수 없습니다.
           </p>
 
-          <button type="button" className={styles.withdrawSubmitButton} onClick={handleCompleteWithdraw}>
+          <button
+            type="button"
+            className={styles.withdrawSubmitButton}
+            onClick={handleCompleteWithdraw}
+          >
             탈퇴하기
           </button>
         </div>
@@ -945,11 +997,11 @@ export default function MapScreen() {
             <CommonIcon name="crossclose" size={20} />
           </button>
         }
-        >
-          <div className={styles.withdrawBody}>
-            <div className={styles.withdrawDoneIcon} aria-hidden="true">
-              <CommonIcon name="check" size={56} />
-            </div>
+      >
+        <div className={styles.withdrawBody}>
+          <div className={styles.withdrawDoneIcon} aria-hidden="true">
+            <CommonIcon name="check" size={56} />
+          </div>
 
           <p className={styles.withdrawDoneHeadline}>회원 탈퇴가 완료되었습니다.</p>
           <p className={styles.withdrawDoneDescription}>
@@ -961,8 +1013,17 @@ export default function MapScreen() {
       </Modal>
 
       {isMenuOpen ? (
-        <div className={styles.menuOverlay} onClick={() => setIsMenuOpen(false)} role="presentation">
-          <div className={styles.menuPanel} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+        <div
+          className={styles.menuOverlay}
+          onClick={() => setIsMenuOpen(false)}
+          role="presentation"
+        >
+          <div
+            className={styles.menuPanel}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
             <div className={styles.menuHeader}>
               <button
                 type="button"
@@ -1007,7 +1068,11 @@ export default function MapScreen() {
                   </span>
                   <span>로그인</span>
                 </button>
-                <button type="button" className={styles.menuGuestSecondary} onClick={handleOpenSignUp}>
+                <button
+                  type="button"
+                  className={styles.menuGuestSecondary}
+                  onClick={handleOpenSignUp}
+                >
                   <span className={styles.menuGuestButtonIcon}>
                     <CommonIcon name="check" size={18} />
                   </span>
@@ -1019,7 +1084,12 @@ export default function MapScreen() {
         </div>
       ) : null}
 
-      <Modal open={isLoginOpen} onClose={handleCloseLogin} closeOnOverlayClick className={styles.loginModal}>
+      <Modal
+        open={isLoginOpen}
+        onClose={handleCloseLogin}
+        closeOnOverlayClick
+        className={styles.loginModal}
+      >
         <form
           className={styles.loginBody}
           onSubmit={(event) => {
@@ -1098,12 +1168,20 @@ export default function MapScreen() {
             <p className={styles.signUpIntroDescription}>계정을 생성하여 서비스를 이용해보세요!</p>
           </div>
 
-          <button type="button" className={styles.signUpIntroPrimaryButton} onClick={handleOpenSignUpForm}>
+          <button
+            type="button"
+            className={styles.signUpIntroPrimaryButton}
+            onClick={handleOpenSignUpForm}
+          >
             계정 생성하기
           </button>
 
           <div className={styles.signUpIntroSecondaryActions}>
-            <button type="button" className={styles.signUpIntroSecondaryButton} onClick={handleOpenLogin}>
+            <button
+              type="button"
+              className={styles.signUpIntroSecondaryButton}
+              onClick={handleOpenLogin}
+            >
               이미 계정이 있다면?
             </button>
             <button
@@ -1117,7 +1195,12 @@ export default function MapScreen() {
         </div>
       </Modal>
 
-      <Modal open={isSignUpOpen} onClose={handleCloseSignUp} closeOnOverlayClick className={styles.signUpModal}>
+      <Modal
+        open={isSignUpOpen}
+        onClose={handleCloseSignUp}
+        closeOnOverlayClick
+        className={styles.signUpModal}
+      >
         <div className={styles.signUpBody}>
           <h2 className={styles.signUpTitle}>계정 생성하기</h2>
 
@@ -1135,8 +1218,13 @@ export default function MapScreen() {
                 }}
                 placeholder="example@email.com"
               />
-              <button type="button" className={styles.emailCheckButton} onClick={handleSendVerification} disabled={isSendingCode}>
-                {isSendingCode ? '전송 중...' : '인증'}
+              <button
+                type="button"
+                className={styles.emailCheckButton}
+                onClick={handleVerifyCode}
+                disabled={isVerifyingCode || isEmailVerified}
+              >
+                {isEmailVerified ? '인증완료' : isVerifyingCode ? '확인 중...' : '확인'}
               </button>
             </div>
           </div>
@@ -1150,13 +1238,20 @@ export default function MapScreen() {
                 value={signUpCode}
                 onChange={(event) => {
                   setSignUpCode(event.target.value);
-                  setIsEmailVerified(false);
+                  if (isEmailVerified) {
+                    setIsEmailVerified(false); // isEmailVerifiedRef 없이 그냥 이걸로!
+                  }
                   setSignUpFieldErrors((prev) => ({ ...prev, code: false }));
                 }}
                 placeholder="6자리 코드를 입력해 주세요"
               />
-              <button type="button" className={styles.emailCheckButton} onClick={handleVerifyCode} disabled={isVerifyingCode}>
-                {isVerifyingCode ? '확인 중...' : '확인'}
+              <button
+                type="button"
+                className={styles.emailCheckButton}
+                onClick={handleSendVerification}
+                disabled={isSendingCode}
+              >
+                {isSendingCode ? '전송 중...' : '인증'}
               </button>
             </div>
           </div>
@@ -1202,7 +1297,11 @@ export default function MapScreen() {
           <div className={styles.signUpSelectRow}>
             <div className={styles.signUpField}>
               <label className={styles.signUpLabel}>성별</label>
-              <select className={styles.signUpSelect} value={signUpGender} onChange={(event) => setSignUpGender(event.target.value)}>
+              <select
+                className={styles.signUpSelect}
+                value={signUpGender}
+                onChange={(event) => setSignUpGender(event.target.value)}
+              >
                 <option value="">선택</option>
                 <option value="남성">남성</option>
                 <option value="여성">여성</option>
@@ -1212,7 +1311,11 @@ export default function MapScreen() {
 
             <div className={styles.signUpField}>
               <label className={styles.signUpLabel}>나이대</label>
-              <select className={styles.signUpSelect} value={signUpAge} onChange={(event) => setSignUpAge(event.target.value)}>
+              <select
+                className={styles.signUpSelect}
+                value={signUpAge}
+                onChange={(event) => setSignUpAge(event.target.value)}
+              >
                 <option value="">선택</option>
                 <option value="10대 이하">10대 이하</option>
                 <option value="10대">10대</option>
@@ -1245,7 +1348,12 @@ export default function MapScreen() {
           {signUpError ? <p className={styles.signUpErrorText}>{signUpError}</p> : null}
           {signUpMessage ? <p className={styles.signUpSuccessText}>{signUpMessage}</p> : null}
 
-          <button type="button" className={styles.signUpSubmitButton} onClick={handleSubmitSignUp} disabled={isSigningUp}>
+          <button
+            type="button"
+            className={styles.signUpSubmitButton}
+            onClick={handleSubmitSignUp}
+            disabled={isSigningUp}
+          >
             {isSigningUp ? '가입 중...' : '회원가입'}
           </button>
         </div>
@@ -1272,7 +1380,8 @@ export default function MapScreen() {
           <div className={styles.privacyConsentSection}>
             <h3 className={styles.privacyConsentSectionTitle}>수집 항목</h3>
             <p className={styles.privacyConsentText}>
-              이메일, 비밀번호, 닉네임, 성별, 나이대, 혼밥 레벨 정보를 회원가입 및 서비스 제공을 위해 수집합니다.
+              이메일, 비밀번호, 닉네임, 성별, 나이대, 혼밥 레벨 정보를 회원가입 및 서비스 제공을
+              위해 수집합니다.
             </p>
           </div>
 
@@ -1286,11 +1395,16 @@ export default function MapScreen() {
           <div className={styles.privacyConsentSection}>
             <h3 className={styles.privacyConsentSectionTitle}>보관 기간</h3>
             <p className={styles.privacyConsentText}>
-              회원 탈퇴 시까지 보관하며, 관련 법령에 따라 필요한 경우 일정 기간 추가 보관될 수 있습니다.
+              회원 탈퇴 시까지 보관하며, 관련 법령에 따라 필요한 경우 일정 기간 추가 보관될 수
+              있습니다.
             </p>
           </div>
 
-          <button type="button" className={styles.privacyConsentAgreeButton} onClick={handleAgreePrivacyConsent}>
+          <button
+            type="button"
+            className={styles.privacyConsentAgreeButton}
+            onClick={handleAgreePrivacyConsent}
+          >
             최종 동의
           </button>
         </div>
@@ -1303,7 +1417,12 @@ export default function MapScreen() {
         closeOnOverlayClick
         className={styles.filterModal}
         headerLeft={
-          <button type="button" className={styles.filterBackButton} aria-label="필터 닫기" onClick={() => setIsFilterOpen(false)}>
+          <button
+            type="button"
+            className={styles.filterBackButton}
+            aria-label="필터 닫기"
+            onClick={() => setIsFilterOpen(false)}
+          >
             <CommonIcon name="leftdir" size={28} />
           </button>
         }
@@ -1381,7 +1500,13 @@ export default function MapScreen() {
                   className={`${styles.eatingLevelCard} ${isSelected ? styles.eatingLevelCardSelected : ''}`}
                   onClick={() => setSignUpEatingLevel(option.value)}
                 >
-                  <img src={option.image} alt="" className={styles.eatingLevelImage} draggable={false} aria-hidden="true" />
+                  <img
+                    src={option.image}
+                    alt=""
+                    className={styles.eatingLevelImage}
+                    draggable={false}
+                    aria-hidden="true"
+                  />
                   <strong className={styles.eatingLevelCardTitle}>{option.title}</strong>
                   <p className={styles.eatingLevelCardDescription}>
                     {option.description.split('\n').map((line) => (
