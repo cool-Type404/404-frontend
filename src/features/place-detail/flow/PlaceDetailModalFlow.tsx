@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 
 import Button from '@/components/Button/Button';
 import Modal from '@/components/Modal/Modal';
-import { getBookmarkList, type BookmarkStore } from '@/features/place-detail/api/placeDetail.api';
+import {
+  getBookmarkList,
+  type BookmarkStore,
+} from '@/features/place-detail/api/placeDetail.api';
 import { useBookmark } from '@/features/place-detail/hooks/useBookmark';
 import { useDeleteReview } from '@/features/place-detail/hooks/useDeleteReview';
 import { usePlaceDetail } from '@/features/place-detail/hooks/usePlaceDetail';
@@ -26,22 +29,77 @@ type Props = {
   storeId: number | string | null;
 };
 
+type ReviewLikeOverride = {
+  liked: boolean;
+  likeCount: number;
+};
+
+type PersistedLikedReviews = Record<number, true>;
+
+const getPersistedLikedReviewsStorageKey = (viewerKey: string) =>
+  `place-detail-liked-reviews:${viewerKey}`;
+
+const loadPersistedLikedReviews = (
+  viewerKey: string,
+): PersistedLikedReviews => {
+  if (viewerKey === 'guest') return {};
+
+  try {
+    const raw = window.localStorage.getItem(getPersistedLikedReviewsStorageKey(viewerKey));
+    if (!raw) return {};
+    return JSON.parse(raw) as PersistedLikedReviews;
+  } catch {
+    return {};
+  }
+};
+
 export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) {
   const [view, setView] = useState<View>('detail');
   const [reviewsState, setReviewsState] = useState<Review[]>([]);
+  const [reviewLikeOverrides, setReviewLikeOverrides] = useState<
+    Record<number, ReviewLikeOverride>
+  >({});
+  const [persistedLikedReviews, setPersistedLikedReviews] = useState<PersistedLikedReviews>({});
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isDeleteBlockedOpen, setIsDeleteBlockedOpen] = useState(false);
 
   const currentNickname = window.localStorage.getItem('userNickname') ?? '';
+  const loginEmail = window.localStorage.getItem('loginEmail') ?? '';
   const isAuthenticated = Boolean(window.localStorage.getItem('accessToken'));
+  const viewerKey = isAuthenticated ? `auth:${loginEmail || currentNickname || 'unknown'}` : 'guest';
   const storeIdNum = storeId != null && !Number.isNaN(Number(storeId)) ? Number(storeId) : null;
 
   const { data: detailData, isLoading: isDetailLoading } = usePlaceDetail(storeIdNum ?? 0);
-  const { data: reviewsData } = usePlaceReviews(storeIdNum ?? 0);
+  const { data: reviewsData } = usePlaceReviews(storeIdNum ?? 0, viewerKey);
   const { addBookmark, removeBookmark } = useBookmark(storeIdNum ?? 0);
   const { like, unlike } = useReviewLike();
   const writeReview = useWriteReview(storeIdNum ?? 0);
   const deleteReviewMutation = useDeleteReview(storeIdNum ?? 0);
+
+  useEffect(() => {
+    if (!open) return;
+
+    setView('detail');
+    setIsDeleteBlockedOpen(false);
+  }, [open]);
+
+  useEffect(() => {
+    setPersistedLikedReviews(loadPersistedLikedReviews(viewerKey));
+  }, [viewerKey]);
+
+  useEffect(() => {
+    setReviewLikeOverrides({});
+    setReviewsState([]);
+  }, [storeIdNum, viewerKey]);
+
+  useEffect(() => {
+    if (viewerKey === 'guest') return;
+
+    window.localStorage.setItem(
+      getPersistedLikedReviewsStorageKey(viewerKey),
+      JSON.stringify(persistedLikedReviews),
+    );
+  }, [persistedLikedReviews, viewerKey]);
 
   useEffect(() => {
     if (!open || storeIdNum == null) return;
@@ -54,6 +112,52 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
         setIsBookmarked(false);
       });
   }, [open, storeIdNum]);
+
+  useEffect(() => {
+    if (!reviewsData || storeIdNum == null) return;
+
+    const converted: Review[] = reviewsData.map((review) => {
+      const override = reviewLikeOverrides[review.reviewId];
+      const persistedLiked = Boolean(persistedLikedReviews[review.reviewId]);
+      const likedByMe = override?.liked ?? (Boolean(review.isLiked) || persistedLiked);
+
+      return {
+        review_id: review.reviewId,
+        storeInfoPK: storeIdNum,
+        user_id: review.userId ?? review.reviewId,
+        review_contents: review.reviewContents,
+        review_rating: review.reviewRating,
+        created_at: review.createdAt,
+        user_nickname: review.userNickname ?? review.reviewWriter ?? '익명',
+        like_count: override?.likeCount ?? review.likeCount ?? 0,
+        liked_by_me: likedByMe,
+        is_mine:
+          isAuthenticated &&
+          currentNickname.length > 0 &&
+          (review.userNickname ?? review.reviewWriter ?? '') === currentNickname,
+        hashtags: (review.hashtags ?? []).map((hashtag, index) => ({
+          hashtag_id:
+            typeof hashtag === 'string' ? `${review.reviewId}-${index}` : hashtag.hashtagId,
+          review_id: review.reviewId,
+          hashtag_name: typeof hashtag === 'string' ? hashtag : hashtag.hashtagName,
+        })),
+        review_images: (review.reviewImages ?? []).map((image, index) => ({
+          review_img_id: `${review.reviewId}-img-${index}`,
+          review_id: review.reviewId,
+          review_img_path: image,
+        })),
+      };
+    });
+
+    setReviewsState(converted);
+  }, [
+    currentNickname,
+    isAuthenticated,
+    persistedLikedReviews,
+    reviewLikeOverrides,
+    reviewsData,
+    storeIdNum,
+  ]);
 
   const place: PlaceDetail | null =
     detailData && storeIdNum != null
@@ -110,43 +214,6 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
         }
       : null;
 
-  useEffect(() => {
-    if (!open) return;
-    setView('detail');
-    setIsDeleteBlockedOpen(false);
-
-    if (!reviewsData) return;
-
-    const converted: Review[] = reviewsData.map((review) => ({
-      review_id: review.reviewId,
-      storeInfoPK: storeIdNum ?? 0,
-      user_id: review.userId ?? review.reviewId,
-      review_contents: review.reviewContents,
-      review_rating: review.reviewRating,
-      created_at: review.createdAt,
-      user_nickname: review.userNickname ?? review.reviewWriter ?? '익명',
-      like_count: review.likeCount ?? 0,
-      liked_by_me: review.isLiked ?? false,
-      is_mine:
-        isAuthenticated &&
-        currentNickname.length > 0 &&
-        (review.userNickname ?? review.reviewWriter ?? '') === currentNickname,
-      hashtags: (review.hashtags ?? []).map((hashtag, index) => ({
-        hashtag_id: typeof hashtag === 'string' ? `${review.reviewId}-${index}` : hashtag.hashtagId,
-        review_id: review.reviewId,
-        hashtag_name: typeof hashtag === 'string' ? hashtag : hashtag.hashtagName,
-      })),
-      review_images: (review.reviewImages ?? []).map((image, index) => ({
-        review_img_id: `${review.reviewId}-img-${index}`,
-        review_id: review.reviewId,
-        review_img_path: image,
-      })),
-    }));
-
-    setReviewsState(converted);
-  }, [currentNickname, isAuthenticated, reviewsData, storeIdNum]);
-  //open 의존성 제거! storeId나 reviewsData가 바뀔 때만 재세팅
-
   const handleMoreReviews = useCallback(() => setView('reviews'), []);
   const handleBack = useCallback(() => setView('detail'), []);
 
@@ -189,33 +256,89 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
       }
 
       const id = Number(reviewId);
-      const review = reviewsState.find((item) => item.review_id === reviewId);
+      const review = reviewsState.find((item) => Number(item.review_id) === id);
       if (!review) return;
 
+      const previousLiked = Boolean(review.liked_by_me);
+      const previousLikeCount = review.like_count ?? 0;
+      const nextLiked = !previousLiked;
+      const nextLikeCount = Math.max(0, previousLikeCount + (nextLiked ? 1 : -1));
+
       setReviewsState((prev) =>
-        prev.map((item) => {
-          if (item.review_id !== reviewId) return item;
-          const liked = Boolean(item.liked_by_me);
-          return {
-            ...item,
-            liked_by_me: !liked,
-            like_count: Math.max(0, (item.like_count ?? 0) + (liked ? -1 : 1)),
-          };
-        }),
+        prev.map((item) =>
+          Number(item.review_id) === id
+            ? {
+                ...item,
+                liked_by_me: nextLiked,
+                like_count: nextLikeCount,
+              }
+            : item,
+        ),
       );
 
-      if (review.liked_by_me) {
-        unlike.mutate(id);
-      } else {
-        like.mutate(id);
+      setReviewLikeOverrides((prev) => ({
+        ...prev,
+        [id]: {
+          liked: nextLiked,
+          likeCount: nextLikeCount,
+        },
+      }));
+
+      setPersistedLikedReviews((prev) => {
+        if (nextLiked) {
+          return { ...prev, [id]: true };
+        }
+
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+
+      const rollback = () => {
+        setReviewsState((prev) =>
+          prev.map((item) =>
+            Number(item.review_id) === id
+              ? {
+                  ...item,
+                  liked_by_me: previousLiked,
+                  like_count: previousLikeCount,
+                }
+              : item,
+          ),
+        );
+
+        setReviewLikeOverrides((prev) => ({
+          ...prev,
+          [id]: {
+            liked: previousLiked,
+            likeCount: previousLikeCount,
+          },
+        }));
+
+        setPersistedLikedReviews((prev) => {
+          if (previousLiked) {
+            return { ...prev, [id]: true };
+          }
+
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+      };
+
+      if (previousLiked) {
+        unlike.mutate(id, { onError: rollback });
+        return;
       }
+
+      like.mutate(id, { onError: rollback });
     },
     [isAuthenticated, like, reviewsState, unlike],
   );
 
   const handleDeleteReview = useCallback(
     (reviewId: string | number) => {
-      const review = reviewsState.find((item) => item.review_id === reviewId);
+      const review = reviewsState.find((item) => Number(item.review_id) === Number(reviewId));
 
       if (!isAuthenticated || !review?.is_mine) {
         setIsDeleteBlockedOpen(true);
@@ -223,7 +346,7 @@ export default function PlaceDetailModalFlow({ open, onClose, storeId }: Props) 
       }
 
       const id = Number(reviewId);
-      setReviewsState((prev) => prev.filter((item) => item.review_id !== reviewId));
+      setReviewsState((prev) => prev.filter((item) => Number(item.review_id) !== id));
       deleteReviewMutation.mutate(id);
     },
     [deleteReviewMutation, isAuthenticated, reviewsState],

@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { useReviewImage } from '@/features/place-detail/hooks/useReviewImage';
-
 import Chip from '@/components/Chip/Chip';
 import { CommonIcon } from '@/components/CommonIcon/CommonIcon';
+import { useReviewImage } from '@/features/place-detail/hooks/useReviewImage';
 
 import styles from './ReviewCard.module.css';
 
@@ -18,7 +17,6 @@ export type ReviewCardProps = {
   likesCount: number;
   likedByMe?: boolean;
   isMine?: boolean;
-
   onToggleLike?: (id: string | number) => void;
   onDelete?: (id: string | number) => void;
 };
@@ -44,12 +42,12 @@ export default function ReviewCard({
   useEffect(() => {
     if (!menuOpen) return;
 
-    const onPointerDownCapture = (e: PointerEvent) => {
-      const target = e.target as Node | null;
-      const el = menuRef.current;
-      if (!el || !target) return;
+    const onPointerDownCapture = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      const element = menuRef.current;
+      if (!element || !target) return;
 
-      if (!el.contains(target)) setMenuOpen(false);
+      if (!element.contains(target)) setMenuOpen(false);
     };
 
     document.addEventListener('pointerdown', onPointerDownCapture, true);
@@ -60,11 +58,14 @@ export default function ReviewCard({
   }, [menuOpen]);
 
   const filled = Math.max(0, Math.min(5, Math.round(rating)));
-  const stars = Array.from({ length: 5 }, (_, i) => (i < filled ? 'starfilled' : 'starline'));
+  const stars = Array.from({ length: 5 }, (_, index) =>
+    index < filled ? 'starfilled' : 'starline',
+  );
 
   const showTags = (tags?.length ?? 0) > 0;
   const showImage = Boolean(resolvedImageUrl);
   const showContent = Boolean(content && content.trim().length > 0);
+  const isLiked = Boolean(likedByMe);
 
   const handleLike = () => onToggleLike?.(id);
 
@@ -83,7 +84,7 @@ export default function ReviewCard({
             type="button"
             className={styles.iconBtn}
             aria-label="리뷰 메뉴"
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => setMenuOpen((value) => !value)}
           >
             <CommonIcon name="threedots" size={18} />
           </button>
@@ -100,8 +101,8 @@ export default function ReviewCard({
 
       <div className={styles.metaRow}>
         <div className={styles.stars} aria-label={`평점 ${rating}점`}>
-          {stars.map((name, idx) => (
-            <CommonIcon key={idx} name={name} size={14} />
+          {stars.map((name, index) => (
+            <CommonIcon key={index} name={name} size={14} />
           ))}
         </div>
         <div className={styles.date}>{date}</div>
@@ -111,9 +112,9 @@ export default function ReviewCard({
 
       {showTags ? (
         <div className={styles.tags}>
-          {tags?.map((t, i) => (
-            <Chip key={`${t}-${i}`} variant="hashtag" size="sm">
-              {t}
+          {tags?.map((tag, index) => (
+            <Chip key={`${tag}-${index}`} variant="hashtag" size="sm">
+              {tag}
             </Chip>
           ))}
         </div>
@@ -121,18 +122,23 @@ export default function ReviewCard({
 
       {showImage ? (
         <div className={styles.imageWrap}>
-          <img
-            src={resolvedImageUrl!}
-            alt="리뷰 이미지"
-            className={styles.image}
-            draggable={false}
-          />
+          <img src={resolvedImageUrl!} alt="리뷰 이미지" className={styles.image} draggable={false} />
         </div>
       ) : null}
 
       <footer className={styles.bottomRow}>
-        <button type="button" className={styles.likeBtn} onClick={handleLike} aria-label="좋아요">
-          <CommonIcon name={likedByMe ? 'thumbsupfilled' : 'thumbsupline'} size={16} />
+        <button
+          type="button"
+          className={`${styles.likeBtn} ${isLiked ? styles.likeBtnActive : ''}`}
+          onClick={handleLike}
+          aria-label="좋아요"
+          aria-pressed={isLiked}
+        >
+          <CommonIcon
+            name={isLiked ? 'thumbsupfilled' : 'thumbsupline'}
+            size={16}
+            variant={isLiked ? 'primary' : 'inherit'}
+          />
           <span className={styles.likeCount}>{likesCount}</span>
         </button>
       </footer>
